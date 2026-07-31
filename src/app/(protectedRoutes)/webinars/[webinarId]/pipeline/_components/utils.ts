@@ -1,4 +1,4 @@
-import { AttendedTypeEnum } from '@prisma/client'
+import { AttendedTypeEnum } from '@/generated/prisma/client'
 
 export const formatColumnTitle = (columnType: AttendedTypeEnum): string => {
   return columnType

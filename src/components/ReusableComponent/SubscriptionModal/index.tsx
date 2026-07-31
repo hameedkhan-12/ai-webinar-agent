@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { User } from '@prisma/client'
+import { User } from '@/generated/prisma/client'
 import { CardElement, useElements } from '@stripe/react-stripe-js'
 import { useStripe } from '@stripe/react-stripe-js'
 import { useRouter } from 'next/navigation'

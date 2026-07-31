@@ -4,7 +4,7 @@ import {
   User as StreamUser,
 } from '@stream-io/video-react-sdk'
 import { WebinarWithPresenter } from '@/lib/type'
-import { User } from '@prisma/client'
+import { User } from '@/generated/prisma/client'
 import React, { useEffect, useState } from 'react'
 import CustomLivestreamPlayer from './CustomLivestreamPlayer'
 import { getTokenForHost } from '@/actions/streamIo'

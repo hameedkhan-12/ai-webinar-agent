@@ -19,18 +19,36 @@ export async function onAuthenticateUser() {
     })
 
     if (userExists) {
+      const updatedUser = await prisma.user.update({
+        where: { clerkId: user.id },
+        data: { lastLoginAt: new Date() },
+      })
+
       return {
         status: 200,
-        user: userExists,
+        user: updatedUser,
+      }
+    }
+
+    const primaryEmail =
+      user.emailAddresses.find(
+        (email) => email.id === user.primaryEmailAddressId
+      )?.emailAddress || user.emailAddresses[0]?.emailAddress
+
+    if (!primaryEmail) {
+      return {
+        status: 400,
+        message: 'No email address found for this user',
       }
     }
 
     const newUser = await prisma.user.create({
       data: {
         clerkId: user.id,
-        email: user.emailAddresses[0].emailAddress,
-        name: user.firstName + ' ' + user.lastName,
+        email: primaryEmail,
+        name: [user.firstName, user.lastName].filter(Boolean).join(' ') || 'Unnamed User',
         profileImage: user.imageUrl,
+        lastLoginAt: new Date(),
       },
     })
     if (!newUser) {

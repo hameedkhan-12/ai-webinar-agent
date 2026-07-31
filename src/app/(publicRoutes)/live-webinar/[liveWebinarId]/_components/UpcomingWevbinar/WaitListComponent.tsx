@@ -64,14 +64,16 @@ const WaitListComponent = ({
       }
 
       if (res.data?.user) {
-        setAttendee({
-          id: res.data.user.id,
-          name: res.data.user.name,
-          email: res.data.user.email,
-          callStatus: 'PENDING',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
+        setAttendee(
+          {
+            id: res.data.user.id,
+            name: res.data.user.name,
+            email: res.data.user.email,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+          webinarId
+        )
       }
 
       toast.success(

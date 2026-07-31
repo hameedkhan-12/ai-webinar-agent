@@ -1,6 +1,6 @@
 'use server'
 
-import { Attendee, Webinar } from '@prisma/client'
+import { Attendee, Webinar } from '@/generated/prisma/client'
 import { getStreamClient } from '@/lib/streamio/streamClient'
 import { UserRequest } from '@stream-io/node-sdk'
 // import { prismaClient } from '@/lib/prismaClient'
@@ -98,4 +98,4 @@ export const createAndStartStream = async (webinar: Webinar) => {
   }
 }
 
-//Premium Feature: Make a call to get the recording. 
+//Premium Feature: Make a call to get the recording.

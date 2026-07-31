@@ -1,6 +1,6 @@
 import { Badge } from '@/components/ui/badge'
 import UserInfoCard from '@/components/ReusableComponent/UserInfoCard'
-import { Attendee } from '@prisma/client'
+import { Attendee } from '@/generated/prisma/client'
 
 interface StatusColumnProps {
   title: string

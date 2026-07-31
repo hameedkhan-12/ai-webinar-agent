@@ -24,6 +24,10 @@ const RenderWebinar = ({ error, user, webinar, apiKey, recording }: Props) => {
   const router = useRouter()
   const pathname = usePathname()
   const { attendee } = useAttendeeStore()
+  // Only treat this attendee as registered if the stored record actually
+  // belongs to THIS webinar - a persisted attendee from a different
+  // webinar should not skip straight to the Participant/call flow.
+  const isRegisteredForThisWebinar = attendee?.webinarId === webinar.id
 
   useEffect(() => {
     if (error) {
@@ -44,7 +48,7 @@ const RenderWebinar = ({ error, user, webinar, apiKey, recording }: Props) => {
               callId={webinar.id}
               user={user}
             />
-          ) : attendee ? (
+          ) : isRegisteredForThisWebinar ? (
             <Participant
               apiKey={apiKey}
               webinar={webinar}

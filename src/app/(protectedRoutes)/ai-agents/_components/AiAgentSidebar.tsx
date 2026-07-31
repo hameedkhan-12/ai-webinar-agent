@@ -39,7 +39,7 @@ const AiAgentSidebar = ({ aiAgents }: Props) => {
             className={`p-4 ${
               aiAssistant.id === assistant?.id ? 'bg-primary/10' : ''
             } hover:bg-primary/20 cursor-pointer`}
-            key={aiAssistant.name}
+            key={aiAssistant.id}
             onClick={() => {
               setAssistant(aiAssistant)
             }}

@@ -1,4 +1,4 @@
-import { Attendee, Webinar, User } from '@prisma/client'
+import { Attendee, Webinar, User } from '@/generated/prisma/client'
 
 export type ValidationErrors = Record<string, string>
 

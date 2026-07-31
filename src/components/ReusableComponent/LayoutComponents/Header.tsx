@@ -1,6 +1,6 @@
 'use client'
 import { Button } from '@/components/ui/button'
-import { User } from '@prisma/client'
+import { User } from '@/generated/prisma/client'
 import { ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { usePathname } from 'next/navigation'

@@ -1,10 +1,12 @@
-import type { Attendee } from "@prisma/client"
+import type { Attendee } from "@/generated/prisma/client"
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
+type StoredAttendee = Attendee & { webinarId: string }
+
 type AttendeeStore = {
-  attendee: Attendee | null
-  setAttendee: (attendee: Attendee) => void
+  attendee: StoredAttendee | null
+  setAttendee: (attendee: Attendee, webinarId: string) => void
   clearAttendee: () => void
 }
 
@@ -13,7 +15,13 @@ export const useAttendeeStore = create<AttendeeStore>()(
   persist(
     (set) => ({
       attendee: null,
-      setAttendee: (attendee) => set({ attendee }),
+      // Store which webinar this attendee record belongs to, so a
+      // registration for one webinar doesn't leak into another webinar's
+      // page (which would otherwise skip the registration form and send
+      // the user to a call for a webinar they never actually registered
+      // for, ending in an attendee-not-found redirect loop).
+      setAttendee: (attendee, webinarId) =>
+        set({ attendee: { ...attendee, webinarId } }),
       clearAttendee: () => set({ attendee: null }),
     }),
     {

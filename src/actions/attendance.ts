@@ -118,7 +118,7 @@ export const getWebinarAttendance = async (
             email: attendance.user.email,
             attendedAt: attendance.joinedAt,
             stripeConnectId: null,
-            callStatus: attendance.user.callStatus,
+            callStatus: attendance.callStatus,
             createdAt: attendance.user.createdAt,
             updatedAt: attendance.user.updatedAt,
           }))
@@ -291,7 +291,7 @@ export const getAttendeeById = async (id: string, webinarId: string) => {
       status: 200,
       success: true,
       message: 'Get attendee details successful',
-      data: attendee,
+      data: { ...attendee, callStatus: attendance.callStatus },
     }
   } catch (error) {
     console.log('Error', error)
@@ -305,12 +305,16 @@ export const getAttendeeById = async (id: string, webinarId: string) => {
 
 export const changeCallStatus = async (
   attendeeId: string,
+  webinarId: string,
   callStatus: CallStatusEnum
 ) => {
   try {
-    const attendee = await prisma.attendee.update({
+    const attendance = await prisma.attendance.update({
       where: {
-        id: attendeeId,
+        attendeeId_webinarId: {
+          attendeeId,
+          webinarId,
+        },
       },
       data: {
         callStatus: callStatus,
@@ -321,7 +325,7 @@ export const changeCallStatus = async (
       success: true,
       status: 200,
       message: 'Call status updated successfully',
-      data: attendee,
+      data: attendance,
     }
   } catch (error) {
     console.error('Error updating call status:', error)

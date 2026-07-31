@@ -1,7 +1,7 @@
 import { getAttendeeById } from '@/actions/attendance'
 import { getWebinarById } from '@/actions/webinar'
 import { WebinarWithPresenter } from '@/lib/type'
-import { CallStatusEnum, WebinarStatusEnum } from '@prisma/client'
+import { CallStatusEnum, WebinarStatusEnum } from '@/generated/prisma/client'
 import { redirect } from 'next/navigation'
 import React from 'react'
 import AutoConnectCall from './AutoConnectCall'
@@ -40,20 +40,9 @@ const page = async ({ params, searchParams }: Props) => {
     redirect(`/live-webinar/${liveWebinarId}?error=webinar-not-started`)
   }
   
-  if (
-    webinar.ctaType !== 'BOOK_A_CALL' ||
-    !webinar.aiAgentId ||
-    !webinar.priceId
-  ) {
+  if (webinar.ctaType !== 'BOOK_A_CALL' || !webinar.aiAgentId) {
     redirect(`/live-webinar/${liveWebinarId}?error=cannot-book-a-call`)
   }
-
-  console.log(
-    '______________________________________',
-    webinar.ctaType,
-    webinar.aiAgentId,
-    webinar.priceId
-  )
 
   if (attendee.data.callStatus === CallStatusEnum.COMPLETED) {
     redirect(`/live-webinar/${liveWebinarId}?error=call-not-pending`)

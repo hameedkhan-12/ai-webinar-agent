@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { Attendee } from '@prisma/client'
+import { Attendee } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import React from 'react'
 

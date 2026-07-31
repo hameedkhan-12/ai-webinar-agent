@@ -8,7 +8,7 @@ import { Webcam } from 'lucide-react'
 import { redirect } from 'next/navigation'
 import React from 'react'
 import WebinarCard from './_components/WebinarCard'
-import { Webinar, WebinarStatusEnum } from '@prisma/client'
+import { Webinar, WebinarStatusEnum } from '@/generated/prisma/client'
 import Link from 'next/link'
 
 type Props = {

@@ -1,5 +1,5 @@
 import PipelineIcon from '@/icons/PipelineIcon'
-import { Webinar } from '@prisma/client'
+import { Webinar } from '@/generated/prisma/client'
 import { format } from 'date-fns'
 import { Calendar } from 'lucide-react'
 import Image from 'next/image'

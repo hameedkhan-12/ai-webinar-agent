@@ -5,7 +5,7 @@ import PipelineIcon from '@/icons/PipelineIcon'
 import { HomeIcon } from 'lucide-react'
 import React from 'react'
 import PipelineLayout from './_components/PipelineLayout'
-import { AttendedTypeEnum } from '@prisma/client'
+import { AttendedTypeEnum } from '@/generated/prisma/client'
 import { formatColumnTitle } from './_components/utils'
 
 type Props = {

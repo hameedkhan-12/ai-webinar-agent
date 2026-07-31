@@ -6,7 +6,6 @@ export const vapi = new Vapi(
   undefined,
   {
     audioSource: true,
-    videoSource: false,
     startAudioOff: false,
   }
 )

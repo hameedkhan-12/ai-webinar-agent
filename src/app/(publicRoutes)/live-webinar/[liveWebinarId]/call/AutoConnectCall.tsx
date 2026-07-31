@@ -46,6 +46,38 @@ const AutoConnectCall = ({
     userSpeakingTimeout: undefined as NodeJS.Timeout | undefined,
   })
 
+  // Identifies the current call attempt. Incremented every time we start
+  // a new call session. Event handlers compare against this to ignore
+  // stale events from a previous, already-torn-down session - this is
+  // what prevents React Strict Mode's dev-only mount->cleanup->mount
+  // cycle from leaking a late 'call-end' from the aborted first attempt
+  // into the real session's listeners.
+  const callSessionRef = useRef(0)
+  // True once vapi.start() has actually been called for this component
+  // instance - guards against Strict Mode's synthetic second mount
+  // calling vapi.start() a second time on the shared singleton client.
+  const hasStartedRef = useRef(false)
+  // Holds a deferred teardown scheduled by the mount effect's cleanup.
+  // If the component remounts almost immediately after (Strict Mode's
+  // dev-only fake unmount), the new mount cancels this before it runs,
+  // so the one real call session survives. A genuine unmount (navigating
+  // away) isn't followed by a remount, so the teardown actually executes.
+  const pendingStopRef = useRef<NodeJS.Timeout | undefined>(undefined)
+
+  // Keep latest values in refs so the requestAnimationFrame loop in
+  // checkAudioLevel (started once in setupAudio) always reads current
+  // state instead of the stale values from its original closure.
+  const assistantIsSpeakingRef = useRef(assistantIsSpeaking)
+  const isMicMutedRef = useRef(isMicMuted)
+
+  useEffect(() => {
+    assistantIsSpeakingRef.current = assistantIsSpeaking
+  }, [assistantIsSpeaking])
+
+  useEffect(() => {
+    isMicMutedRef.current = isMicMuted
+  }, [isMicMuted])
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -95,7 +127,11 @@ const AutoConnectCall = ({
         const normalizedVolume = average / 256
 
         // Detect speech based on volume
-        if (normalizedVolume > 0.15 && !assistantIsSpeaking && !isMicMuted) {
+        if (
+          normalizedVolume > 0.15 &&
+          !assistantIsSpeakingRef.current &&
+          !isMicMutedRef.current
+        ) {
           setUserIsSpeaking(true)
 
           // Clear previous timeout
@@ -124,7 +160,7 @@ const AutoConnectCall = ({
       vapi.stop()
       setCallStatus(CallStatus.FINISHED)
       cleanup()
-      const res = await changeCallStatus(userId, CallStatusEnum.COMPLETED)
+      const res = await changeCallStatus(userId, webinar.id, CallStatusEnum.COMPLETED)
       if (!res.success) {
         throw new Error('Failed to update call status')
       }
@@ -170,7 +206,7 @@ const AutoConnectCall = ({
     try {
       setCallStatus(CallStatus.CONNECTING)
       await vapi.start(assistantId)
-      const res = await changeCallStatus(userId, CallStatusEnum.InProgress)
+      const res = await changeCallStatus(userId, webinar.id, CallStatusEnum.InProgress)
       if (!res.success) {
         throw new Error('Failed to update call status')
       }
@@ -184,12 +220,30 @@ const AutoConnectCall = ({
 
   // Call setup & cleanup
   useEffect(() => {
-    // Start the call immediately on mount
-    startCall()
+    // A pending deferred teardown from a previous (fake) cleanup means
+    // we're the Strict Mode remount right after it - cancel that
+    // teardown, the call session is still meant to be running.
+    if (pendingStopRef.current) {
+      clearTimeout(pendingStopRef.current)
+      pendingStopRef.current = undefined
+    }
 
-    // Return cleanup function
+    if (!hasStartedRef.current) {
+      hasStartedRef.current = true
+      callSessionRef.current += 1
+      startCall()
+    }
+
     return () => {
-      stopCall()
+      // Defer the real teardown by a tick. If this was Strict Mode's
+      // synthetic unmount, the effect above will run again almost
+      // immediately and cancel this before it fires. If it's a genuine
+      // unmount (navigating away), nothing cancels it and it runs.
+      pendingStopRef.current = setTimeout(() => {
+        vapi.stop()
+        cleanup()
+        hasStartedRef.current = false
+      }, 0)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Empty dependency array means this runs once on mount
@@ -217,6 +271,11 @@ const AutoConnectCall = ({
       console.log('Call ended')
       setCallStatus(CallStatus.FINISHED)
       cleanup()
+      changeCallStatus(userId, webinar.id, CallStatusEnum.COMPLETED).catch(
+        (error) => {
+          console.error('Failed to update call status on call-end:', error)
+        }
+      )
     }
 
     const onSpeechStart = () => {
