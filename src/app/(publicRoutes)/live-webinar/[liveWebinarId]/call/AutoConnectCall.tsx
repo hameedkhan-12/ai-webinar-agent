@@ -7,6 +7,7 @@ import { CallStatusEnum } from '@/generated/prisma/enums'
 import { WebinarWithPresenter } from '@/lib/type'
 import { cn } from '@/lib/utils'
 import { vapi } from '@/lib/vapi/vapiclient'
+import { buildEngagementCallOverrides } from '@/lib/vapi/buildCallOverrides'
 import { Bot, Clock, Loader2, Mic, MicOff, PhoneOff } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -24,6 +25,7 @@ type Props = {
   callTimeLimit?: number
   webinar: WebinarWithPresenter
   userId: string
+  engagementSummary?: string
 }
 
 const AutoConnectCall = ({
@@ -33,6 +35,7 @@ const AutoConnectCall = ({
   callTimeLimit = 3000,
   webinar,
   userId,
+  engagementSummary,
 }: Props) => {
   const [callStatus, setCallStatus] = useState(CallStatus.CONNECTING)
   const [assistantIsSpeaking, setAssistantIsSpeaking] = useState(false)
@@ -205,7 +208,8 @@ const AutoConnectCall = ({
   const startCall = async () => {
     try {
       setCallStatus(CallStatus.CONNECTING)
-      await vapi.start(assistantId)
+      const overrides = buildEngagementCallOverrides(engagementSummary)
+      await vapi.start(assistantId, overrides)
       const res = await changeCallStatus(userId, webinar.id, CallStatusEnum.InProgress)
       if (!res.success) {
         throw new Error('Failed to update call status')

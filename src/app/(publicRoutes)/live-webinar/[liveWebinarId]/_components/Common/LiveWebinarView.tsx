@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import ObsDialogBox from './ObsDialogBox'
 import { CtaTypeEnum } from '@/generated/prisma/enums'
+import { logChatMessage, logWatchProgress } from '@/actions/engagement'
 
 type Props = {
   showChat: boolean
@@ -126,10 +127,42 @@ const LiveWebinarView = ({
           window.location.reload()
         }
 
-        // console.log("New message:", event);s
+        // Track the attendee's own chat activity as engagement signal for
+        // Phase 3 (context-aware AI call handoff). Only log the current
+        // viewer's own messages, and only for attendees, not the host.
+        if (
+          event.type === 'message.new' &&
+          !isHost &&
+          event.message?.user?.id === userId &&
+          typeof event.message?.text === 'string'
+        ) {
+          logChatMessage(userId, webinar.id, event.message.text).catch(
+            (error) => {
+              console.error('Failed to log chat engagement:', error)
+            }
+          )
+        }
       })
     }
-  }, [chatClient, channel, isHost])
+  }, [chatClient, channel, isHost, userId, webinar.id])
+
+  // Watch-time heartbeat: periodically records how long this attendee has
+  // been on the live webinar page. Attendee-only, not tracked for hosts.
+  useEffect(() => {
+    if (isHost) return
+
+    const HEARTBEAT_INTERVAL_MS = 60_000
+    const startedAt = Date.now()
+
+    const interval = setInterval(() => {
+      const secondsWatched = Math.round((Date.now() - startedAt) / 1000)
+      logWatchProgress(userId, webinar.id, secondsWatched).catch((error) => {
+        console.error('Failed to log watch progress engagement:', error)
+      })
+    }, HEARTBEAT_INTERVAL_MS)
+
+    return () => clearInterval(interval)
+  }, [isHost, userId, webinar.id])
 
   useEffect(() => {
     // BONUS FEATURE START RECORDING

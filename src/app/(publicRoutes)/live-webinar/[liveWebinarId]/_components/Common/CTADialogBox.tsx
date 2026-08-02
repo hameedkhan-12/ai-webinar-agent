@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { createCheckoutLink } from '@/actions/stripe'
+import { logCtaClick } from '@/actions/engagement'
 import { toast } from 'sonner'
 import type { WebinarWithPresenter } from '@/lib/type'
 import { useState } from 'react'
@@ -38,6 +39,12 @@ const CTADialogBox = ({
   const handleClick = async () => {
     setLoading(true)
     try {
+      // Fire-and-forget: engagement tracking must never block or break
+      // the actual CTA action if it fails.
+      logCtaClick(userId, webinar.id, webinar.ctaType).catch((error) => {
+        console.error('Failed to log CTA click engagement:', error)
+      })
+
       if (webinar.ctaType === 'BOOK_A_CALL') {
         router.push(`/live-webinar/${webinar.id}/call?attendeeId=${userId}`)
       } else {

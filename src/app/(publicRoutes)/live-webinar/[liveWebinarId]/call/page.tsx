@@ -1,9 +1,9 @@
 import { getAttendeeById } from '@/actions/attendance'
 import { getWebinarById } from '@/actions/webinar'
+import { buildEngagementSummary } from '@/actions/engagement'
 import { WebinarWithPresenter } from '@/lib/type'
-import { CallStatusEnum, WebinarStatusEnum } from '@/generated/prisma/client'
+import { CallStatusEnum, WebinarStatusEnum } from '@/generated/prisma/enums'
 import { redirect } from 'next/navigation'
-import React from 'react'
 import AutoConnectCall from './AutoConnectCall'
 
 type Props = {
@@ -48,12 +48,23 @@ const page = async ({ params, searchParams }: Props) => {
     redirect(`/live-webinar/${liveWebinarId}?error=call-not-pending`)
   }
 
+  // Engagement context is a nice-to-have for a warmer call opener, never
+  // a hard requirement - if it fails, the call still starts normally.
+  const engagementSummaryResult = await buildEngagementSummary(
+    attendeeId,
+    liveWebinarId
+  )
+  const engagementSummary = engagementSummaryResult.success
+    ? engagementSummaryResult.data
+    : undefined
+
   return (
     <AutoConnectCall
       userName={attendee.data.name}
       assistantId={webinar.aiAgentId}
       webinar={webinar as WebinarWithPresenter}
       userId={attendeeId}
+      engagementSummary={engagementSummary}
     />
   )
 }

@@ -22,3 +22,29 @@ export const activateSubscription = async () => {
     return { status: 500, success: false, message: 'Failed to activate subscription' }
   }
 }
+
+// Same pattern as activateSubscription, but for the separate paid
+// custom-voice-cloning add-on. Call after a successful Stripe payment
+// (reuse onGetStripeClientSecret with the add-on's own price/amount).
+export const activateCustomVoiceAddon = async () => {
+  const currentUser = await onAuthenticateUser()
+  if (!currentUser.user) {
+    return { status: 401, success: false, message: 'Unauthorized' }
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: currentUser.user.id },
+      data: { customVoiceEnabled: true },
+    })
+
+    return { status: 200, success: true }
+  } catch (error) {
+    console.error('Failed to activate custom voice add-on:', error)
+    return {
+      status: 500,
+      success: false,
+      message: 'Failed to activate custom voice add-on',
+    }
+  }
+}
