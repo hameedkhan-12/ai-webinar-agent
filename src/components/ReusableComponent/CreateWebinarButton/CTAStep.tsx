@@ -8,11 +8,11 @@ import { useWebinarStore } from '@/store/useWebinarStore'
 import { Search, X } from 'lucide-react'
 import React, { useState } from 'react'
 import Stripe from 'stripe'
-import { Assistant } from '@vapi-ai/server-sdk/api'
+import type { VapiAssistantSummary } from '@/lib/vapi/types'
 import { CtaTypeEnum } from '@/generated/prisma/enums'
 type Props = {
   stripeProducts: Stripe.Product[] | []
-  assistants: Assistant[] | []
+  assistants: VapiAssistantSummary[] | []
 }
 
 const CTAStep = ({ stripeProducts, assistants }: Props) => {

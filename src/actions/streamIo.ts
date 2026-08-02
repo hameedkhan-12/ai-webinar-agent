@@ -3,7 +3,6 @@
 import { Attendee, Webinar } from '@/generated/prisma/client'
 import { getStreamClient } from '@/lib/streamio/streamClient'
 import { UserRequest } from '@stream-io/node-sdk'
-// import { prismaClient } from '@/lib/prismaClient'
 
 export const getStreamIoToken = async (attendee: Attendee | null) => {
   try {

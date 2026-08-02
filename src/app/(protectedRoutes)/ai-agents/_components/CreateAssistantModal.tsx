@@ -5,14 +5,18 @@ import { Loader2, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import { toast } from 'sonner'
+import type { User } from '@/generated/prisma/client'
+import VoicePicker from './VoicePicker'
 
 type Props = {
   isOpen: boolean
   onClose: () => void
+  user: User
 }
 
-const CreateAssistantModal = ({ isOpen, onClose }: Props) => {
+const CreateAssistantModal = ({ isOpen, onClose, user }: Props) => {
   const [name, setName] = useState('')
+  const [customVoiceId, setCustomVoiceId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -22,12 +26,13 @@ const CreateAssistantModal = ({ isOpen, onClose }: Props) => {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await createAssistant(name)
+      const res = await createAssistant(name, customVoiceId ?? undefined)
       if (!res.success) {
         throw new Error(res.message)
       }
       router.refresh()
       setName('')
+      setCustomVoiceId(null)
       onClose()
       toast.success('Assistant created successfully')
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -66,6 +71,15 @@ const CreateAssistantModal = ({ isOpen, onClose }: Props) => {
               This name will be used to identify your assistant.
             </p>
           </div>
+
+          <div className="mb-6">
+            <VoicePicker
+              user={user}
+              value={customVoiceId}
+              onChange={setCustomVoiceId}
+            />
+          </div>
+
           <div className="flex justify-end gap-3">
             <Button
               type="button"

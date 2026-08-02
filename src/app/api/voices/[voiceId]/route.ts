@@ -1,0 +1,54 @@
+import { prisma } from '@/lib/prismaClient'
+import { onAuthenticateUser } from '@/actions/auth'
+import { getVapiServer } from '@/lib/vapi/vapiServer'
+import { STOCK_VOICE } from '@/lib/vapi/constants'
+import { deleteAudio } from '@/lib/r2'
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: Promise<{ voiceId: string }> }
+) {
+  const currentUser = await onAuthenticateUser()
+  if (!currentUser.user) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const { voiceId } = await params
+
+  const voice = await prisma.voice.findUnique({
+    where: { id: voiceId },
+    include: { agentVoiceConfigs: true },
+  })
+
+  if (!voice || voice.userId !== currentUser.user.id) {
+    return Response.json({ error: 'Voice not found' }, { status: 404 })
+  }
+
+  // Revert any assistants currently using this voice back to stock BEFORE
+  // deleting it, so they don't end up silently pointing at a cloned voice
+  // that no longer exists (which would just fail mid-call every time).
+  if (voice.agentVoiceConfigs.length > 0) {
+    const vapiServer = getVapiServer()
+    await Promise.allSettled(
+      voice.agentVoiceConfigs.map((config) =>
+        vapiServer.assistants.update(config.assistantId, {
+          voice: STOCK_VOICE,
+          serverMessages: [],
+        })
+      )
+    )
+  }
+
+  if (voice.r2ObjectKey) {
+    await deleteAudio(voice.r2ObjectKey).catch((error) => {
+      console.error('Failed to delete voice sample from R2:', error)
+      // Non-fatal - proceed with deleting the DB record regardless, an
+      // orphaned R2 object is a minor cleanup issue, not a correctness one.
+    })
+  }
+
+  // Cascades delete of any remaining AgentVoiceConfig rows automatically.
+  await prisma.voice.delete({ where: { id: voiceId } })
+
+  return Response.json({ message: 'Voice deleted successfully' }, { status: 200 })
+}

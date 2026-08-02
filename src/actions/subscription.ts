@@ -23,9 +23,6 @@ export const activateSubscription = async () => {
   }
 }
 
-// Same pattern as activateSubscription, but for the separate paid
-// custom-voice-cloning add-on. Call after a successful Stripe payment
-// (reuse onGetStripeClientSecret with the add-on's own price/amount).
 export const activateCustomVoiceAddon = async () => {
   const currentUser = await onAuthenticateUser()
   if (!currentUser.user) {

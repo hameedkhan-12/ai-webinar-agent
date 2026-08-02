@@ -15,11 +15,11 @@ import CTAStep from './CTAStep'
 import AdditionalInfoStep from './AdditionalInfoStep'
 import Stripe from 'stripe'
 import SuccessStep from './SuccessStep'
-import { Assistant } from '@vapi-ai/server-sdk/api'
+import type { VapiAssistantSummary } from '@/lib/vapi/types'
 
 type Props = {
   stripeProducts: Stripe.Product[] | []
-  assistants: Assistant[] | []
+  assistants: VapiAssistantSummary[] | []
 }
 
 const CreateWebinarButton = ({ stripeProducts, assistants }: Props) => {

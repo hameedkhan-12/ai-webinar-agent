@@ -1,9 +1,14 @@
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Settings } from 'lucide-react'
 import React from 'react'
+import type { User } from '@/generated/prisma/client'
 import ModelConfiguration from './ModelConfiguration'
 
-const ModelSection = () => {
+type Props = {
+  user: User
+}
+
+const ModelSection = ({ user }: Props) => {
   return (
     <div className="p-8 flex-1 overflow-auto">
       <div className="flex items-center gap-2 mb-4">
@@ -14,7 +19,7 @@ const ModelSection = () => {
       </div>
 
       <ScrollArea>
-        <ModelConfiguration/>
+        <ModelConfiguration user={user} />
       </ScrollArea>
     </div>
   )

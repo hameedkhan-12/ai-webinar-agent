@@ -3,16 +3,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useAiAgentStore } from '@/store/useAiAgentStore'
-import { Assistant } from '@vapi-ai/server-sdk/api'
+import type { VapiAssistantSummary } from '@/lib/vapi/types'
+import type { User } from '@/generated/prisma/client'
 import { Plus, Search } from 'lucide-react'
 import React, { useState } from 'react'
 import CreateAssistantModal from './CreateAssistantModal'
 
 type Props = {
-  aiAgents: Assistant[] | []
+  aiAgents: VapiAssistantSummary[] | []
+  user: User
 }
 
-const AiAgentSidebar = ({ aiAgents }: Props) => {
+const AiAgentSidebar = ({ aiAgents, user }: Props) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { assistant, setAssistant } = useAiAgentStore()
 
@@ -52,6 +54,7 @@ const AiAgentSidebar = ({ aiAgents }: Props) => {
       <CreateAssistantModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        user={user}
       />
     </div>
   )

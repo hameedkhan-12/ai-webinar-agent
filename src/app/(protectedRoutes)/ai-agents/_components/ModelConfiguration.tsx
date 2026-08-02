@@ -7,19 +7,29 @@ import { useAiAgentStore } from '@/store/useAiAgentStore'
 import { Info, Loader2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import type { User } from '@/generated/prisma/client'
 import ConfigField from './ConfigField'
 import DropdownSelect from './DropdownSelect'
+import VoicePicker from './VoicePicker'
 
-const ModelConfiguration = () => {
+type Props = {
+  user: User
+}
+
+const ModelConfiguration = ({ user }: Props) => {
   const { assistant } = useAiAgentStore()
   const [firstMessage, setFirstMessage] = useState('')
   const [systemPrompt, setSystemPrompt] = useState('')
+  const [customVoiceId, setCustomVoiceId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (assistant) {
       setFirstMessage(assistant?.firstMessage || '')
       setSystemPrompt(assistant?.model?.messages?.[0]?.content || '')
+      // Reset on agent switch - VoicePicker will repopulate this from the
+      // newly selected assistant's actual config via its own fetch.
+      setCustomVoiceId(null)
     }
   }, [assistant])
 
@@ -42,7 +52,8 @@ const ModelConfiguration = () => {
       const res = await updateAssistant(
         assistant?.id,
         firstMessage,
-        systemPrompt
+        systemPrompt,
+        customVoiceId
       )
 
       if (!res.success) {
@@ -102,6 +113,15 @@ const ModelConfiguration = () => {
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           className="min-h-[300px] max-h-[500px] bg-primary/10 border-input font-mono text-sm"
+        />
+      </div>
+
+      <div className="mb-6">
+        <VoicePicker
+          user={user}
+          assistantId={assistant.id}
+          value={customVoiceId}
+          onChange={setCustomVoiceId}
         />
       </div>
 

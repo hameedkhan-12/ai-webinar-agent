@@ -4,11 +4,8 @@ import { aiAgentPrompt } from '@/lib/data'
 import { getVapiServer } from '@/lib/vapi/vapiServer'
 import { prisma } from '@/lib/prismaClient'
 import { onAuthenticateUser } from './auth'
-
-const STOCK_VOICE = {
-  provider: 'vapi' as const,
-  voiceId: 'Cole' as const,
-}
+import { getAssistantId, toAssistantSummary } from '@/lib/vapi/types'
+import { STOCK_VOICE } from '@/lib/vapi/constants'
 
 // Falls back to the stock voice mid-call if our custom-voice server is
 // slow/unreachable (e.g. a Modal cold start), instead of the call going
@@ -55,7 +52,7 @@ export const getAllAssistants = async () => {
     return {
       success: true,
       status: 200,
-      data: getAllAgents,
+      data: getAllAgents.map(toAssistantSummary),
     }
   } catch (error) {
     console.error('Error fetching agents:', error)
@@ -95,15 +92,18 @@ export const createAssistant = async (name: string, customVoiceId?: string) => {
       serverMessages: [],
     })
 
+    const createdAssistantId = getAssistantId(created)
+
     // Step 2: if a custom voice was requested, patch the assistant with
     // its own voice server URL now that we know its ID.
     if (entitlement) {
-      await vapiServer.assistants.update(created.id, {
-        voice: buildCustomVoiceConfig(created.id),
+      await vapiServer.assistants.update(createdAssistantId, {
+        voice: buildCustomVoiceConfig(createdAssistantId),
+        serverMessages: [],
       })
       await prisma.agentVoiceConfig.create({
         data: {
-          assistantId: created.id,
+          assistantId: createdAssistantId,
           userId: entitlement.userId,
           voiceId: entitlement.voiceId,
         },
@@ -113,7 +113,7 @@ export const createAssistant = async (name: string, customVoiceId?: string) => {
     return {
       success: true,
       status: 200,
-      data: created,
+      data: toAssistantSummary(created),
     }
   } catch (error) {
     console.error('Error creating assistant:', error)
@@ -176,7 +176,7 @@ export const updateAssistant = async (
     return {
       success: true,
       status: 200,
-      data: updateAssistant,
+      data: toAssistantSummary(updateAssistant),
     }
   } catch (error) {
     console.error('Error updating assistant:', error)

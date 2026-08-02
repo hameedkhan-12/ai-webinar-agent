@@ -12,12 +12,12 @@ import Stripe from 'stripe'
 
 import { StripeElements } from '../Stripe/Element'
 import SubscriptionModal from '../SubscriptionModal'
-import { Assistant } from '@vapi-ai/server-sdk/api'
+import type { VapiAssistantSummary } from '@/lib/vapi/types'
 
 type Props = {
   user: User
   stripeProducts: Stripe.Product[] | []
-  assistants: Assistant[] | []
+  assistants: VapiAssistantSummary[] | []
 }
 
 //TODO: Stripe Subscription, Assistant,

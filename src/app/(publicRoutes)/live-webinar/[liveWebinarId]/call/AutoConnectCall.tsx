@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { vapi } from '@/lib/vapi/vapiclient'
 import { buildEngagementCallOverrides } from '@/lib/vapi/buildCallOverrides'
 import { Bot, Clock, Loader2, Mic, MicOff, PhoneOff } from 'lucide-react'
-import React, { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 const CallStatus = {
