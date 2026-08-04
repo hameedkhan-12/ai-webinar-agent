@@ -1,9 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { User } from '@/generated/prisma/client'
-import { CardElement, useElements } from '@stripe/react-stripe-js'
-import { useStripe } from '@stripe/react-stripe-js'
-import { useRouter } from 'next/navigation'
+import type { User } from '@/generated/prisma/client'
 import {
   Dialog,
   DialogClose,
@@ -16,8 +13,7 @@ import {
 import { Loader2, Mic } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { onGetCustomVoiceAddonClientSecret } from '@/actions/stripe'
-import { activateCustomVoiceAddon } from '@/actions/subscription'
+import { onGetCustomVoiceAddonCheckoutUrl } from '@/actions/whop'
 
 type Props = {
   user: User
@@ -29,6 +25,14 @@ type Props = {
   onOpenChange?: (open: boolean) => void
 }
 
+/**
+ * With Whop's hosted checkout, confirming just redirects to Whop's
+ * checkout page - no card collection happens in this app at all.
+ * customVoiceEnabled flips via the whop-webhook route once Whop confirms
+ * payment, not synchronously here, so onSuccess is really just used to
+ * close/refresh the picker UI on return, not a guarantee entitlement is
+ * live yet (there can be a brief lag until the webhook lands).
+ */
 const CustomVoiceAddonModal = ({
   user,
   trigger,
@@ -36,9 +40,6 @@ const CustomVoiceAddonModal = ({
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: Props) => {
-  const router = useRouter()
-  const stripe = useStripe()
-  const elements = useElements()
   const [loading, setLoading] = useState(false)
   const [internalOpen, setInternalOpen] = useState(false)
 
@@ -47,51 +48,24 @@ const CustomVoiceAddonModal = ({
   const setOpen = isControlled ? setControlledOpen! : setInternalOpen
 
   const handleConfirm = async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      if (!stripe || !elements) {
-        return toast.error('Stripe not initialized')
-      }
-
-      const intent = await onGetCustomVoiceAddonClientSecret(user.email, user.id)
-
-      if (!intent?.secret) {
-        throw new Error('Failed to initialize payment')
-      }
-
-      const cardElement = elements.getElement(CardElement)
-      if (!cardElement) {
-        throw new Error('Card element not found')
-      }
-
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        intent.secret,
-        { payment_method: { card: cardElement } }
+      const result = await onGetCustomVoiceAddonCheckoutUrl(
+        user.email,
+        user.id
       )
 
-      if (error) {
-        throw new Error(error.message)
+      if (!result?.checkoutUrl) {
+        throw new Error(result?.message || 'Failed to start checkout')
       }
 
-      if (paymentIntent?.status === 'succeeded') {
-        const activateResult = await activateCustomVoiceAddon()
-        if (!activateResult.success) {
-          throw new Error(
-            activateResult.message || 'Failed to activate custom voice add-on'
-          )
-        }
-      }
-
-      toast.success('Custom voice cloning unlocked')
-      setOpen(false)
-      router.refresh()
       onSuccess?.()
+      window.location.href = result.checkoutUrl
     } catch (error) {
       console.error('CUSTOM_VOICE_ADDON -->', error)
       toast.error(
-        error instanceof Error ? error.message : 'Failed to unlock custom voice'
+        error instanceof Error ? error.message : 'Failed to start checkout'
       )
-    } finally {
       setLoading(false)
     }
   }
@@ -116,21 +90,10 @@ const CustomVoiceAddonModal = ({
           <DialogTitle>Custom Voice Cloning Add-on</DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
             Let your AI agents speak in a cloned human voice instead of the
-            stock voice. Billed separately from your base plan.
+            stock voice. Billed separately from your base plan. You&apos;ll be
+            redirected to Whop to complete checkout.
           </p>
         </DialogHeader>
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#B4B0AE',
-                '::placeholder': { color: '#B4B0AE' },
-              },
-            },
-          }}
-          className="border-[1px] outline-none rounded-lg p-3 w-full"
-        />
 
         <DialogFooter className="gap-4 items-center">
           <DialogClose
@@ -148,10 +111,10 @@ const CustomVoiceAddonModal = ({
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Loading...
+                Redirecting...
               </>
             ) : (
-              'Unlock Custom Voice'
+              'Continue to Checkout'
             )}
           </Button>
         </DialogFooter>

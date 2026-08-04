@@ -1,5 +1,4 @@
 import { onAuthenticateUser } from '@/actions/auth'
-import { getAllProductsFromStripe } from '@/actions/stripe'
 import { getAllAssistants } from '@/actions/vapi'
 import Header from '@/components/ReusableComponent/LayoutComponents/Header'
 import Sidebar from '@/components/ReusableComponent/LayoutComponents/Sidebar'
@@ -12,12 +11,10 @@ type Props = {
 
 const Layout = async ({ children }: Props) => {
   const userExist = await onAuthenticateUser()
-  console.log('userExist', userExist)
   if (!userExist.user) {
     redirect('/sign-in')
   }
 
-  const stripeProducts = await getAllProductsFromStripe()
   const assistants = await getAllAssistants()
 
 
@@ -29,7 +26,6 @@ const Layout = async ({ children }: Props) => {
         {/* HEADER */}
         <Header
           user={userExist.user}
-          stripeProducts={stripeProducts.products || []}
           assistants={assistants.data || []}
         />
 

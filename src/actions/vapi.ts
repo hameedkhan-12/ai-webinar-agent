@@ -7,9 +7,6 @@ import { onAuthenticateUser } from './auth'
 import { getAssistantId, toAssistantSummary } from '@/lib/vapi/types'
 import { STOCK_VOICE } from '@/lib/vapi/constants'
 
-// Falls back to the stock voice mid-call if our custom-voice server is
-// slow/unreachable (e.g. a Modal cold start), instead of the call going
-// silent. Vapi enforces this timeout itself.
 const CUSTOM_VOICE_TIMEOUT_SECONDS = 8
 
 const buildCustomVoiceConfig = (assistantId: string) => ({
@@ -24,10 +21,6 @@ const buildCustomVoiceConfig = (assistantId: string) => ({
   },
 })
 
-/**
- * Verifies the current user is entitled to use a given cloned voice
- * (owns it, and has the paid custom-voice add-on enabled).
- */
 const assertCanUseCustomVoice = async (voiceId: string) => {
   const currentUser = await onAuthenticateUser()
   if (!currentUser.user) {

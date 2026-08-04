@@ -1,9 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { User } from '@/generated/prisma/client'
-import { CardElement, useElements } from '@stripe/react-stripe-js'
-import { useStripe } from '@stripe/react-stripe-js'
-import { useRouter } from 'next/navigation'
+import type { User } from '@/generated/prisma/client'
 import {
   DialogClose,
   DialogContent,
@@ -16,67 +13,43 @@ import { Dialog } from '@/components/ui/dialog'
 import { Loader2, PlusIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { onGetStripeClientSecret } from '@/actions/stripe'
-import { activateSubscription } from '@/actions/subscription'
+import { onGetPlatformSubscriptionCheckoutUrl } from '@/actions/whop'
 
 type Props = {
   user: User
 }
 
+/**
+ * With Whop's hosted checkout, we don't collect card details ourselves -
+ * confirming just redirects to Whop's checkout page. The actual
+ * `subscription` flag flips via the whop-webhook route once Whop
+ * confirms payment (membership.went_valid), not synchronously here.
+ */
 const SubscriptionModal = ({ user }: Props) => {
-  const router = useRouter()
-  const stripe = useStripe()
-  const elements = useElements()
   const [loading, setLoading] = useState(false)
 
   const handleConfirm = async () => {
+    setLoading(true)
     try {
-      setLoading(true)
-      if (!stripe || !elements) {
-        return toast.error('Stripe not initialized')
-      }
-
-      const intent = await onGetStripeClientSecret(user.email, user.id)
-
-      if (!intent?.secret) {
-        throw new Error('Failed to initialize payment')
-      }
-
-      const cardElement = elements.getElement(CardElement)
-
-      if (!cardElement) {
-        throw new Error('Card element not found')
-      }
-
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        intent.secret,
-        {
-          payment_method: {
-            card: cardElement,
-          },
-        }
+      const result = await onGetPlatformSubscriptionCheckoutUrl(
+        user.email,
+        user.id
       )
 
-      if (error) {
-        throw new Error(error.message)
+      if (!result?.checkoutUrl) {
+        throw new Error(result?.message || 'Failed to start checkout')
       }
 
-      if (paymentIntent?.status === 'succeeded') {
-        const activateResult = await activateSubscription()
-        if (!activateResult.success) {
-          throw new Error(activateResult.message || 'Failed to activate subscription')
-        }
-      }
-
-      console.log('Payment successful', paymentIntent)
-      router.refresh()
+      window.location.href = result.checkoutUrl
     } catch (error) {
-      console.log('SUBSCRIPTION-->', error)
-      toast.error('Failed to update subscription')
-    } finally {
+      console.error('SUBSCRIPTION-->', error)
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to start checkout'
+      )
       setLoading(false)
     }
   }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -88,21 +61,10 @@ const SubscriptionModal = ({ user }: Props) => {
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Spotlight Subscription</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            You&apos;ll be redirected to Whop to complete your subscription.
+          </p>
         </DialogHeader>
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#B4B0AE',
-                '::placeholder': {
-                  color: '#B4B0AE',
-                },
-              },
-            },
-          }}
-          className="border-[1px] outline-none rounded-lg p-3 w-full"
-        />
 
         <DialogFooter className="gap-4 items-center">
           <DialogClose
@@ -120,10 +82,10 @@ const SubscriptionModal = ({ user }: Props) => {
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Loading...
+                Redirecting...
               </>
             ) : (
-              'Confirm'
+              'Continue to Checkout'
             )}
           </Button>
         </DialogFooter>

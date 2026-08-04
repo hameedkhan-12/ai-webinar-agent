@@ -107,12 +107,6 @@ importers:
       '@stream-io/video-react-sdk':
         specifier: ^1.14.6
         version: 1.39.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)
-      '@stripe/react-stripe-js':
-        specifier: ^3.1.1
-        version: 3.10.0(@stripe/stripe-js@5.10.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@stripe/stripe-js':
-        specifier: ^5.7.0
-        version: 5.10.0
       '@teispace/next-themes':
         specifier: ^2.0.4
         version: 2.0.4(next@16.2.10(react-dom@19.2.7(react@19.2.7))(react@19.2.7))(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
@@ -122,6 +116,9 @@ importers:
       '@vapi-ai/web':
         specifier: ^2.2.7
         version: 2.5.2
+      '@whop/sdk':
+        specifier: ^0.0.42
+        version: 0.0.42
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -188,9 +185,6 @@ importers:
       stream-chat-react:
         specifier: ^12.14.0
         version: 12.16.0(@types/react@19.2.17)(jquery@4.0.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(stream-chat@8.61.0)
-      stripe:
-        specifier: ^17.7.0
-        version: 17.7.0
       tailwind-merge:
         specifier: ^3.2.0
         version: 3.6.0
@@ -1622,17 +1616,6 @@ packages:
   '@stream-io/worker-timer@1.2.5':
     resolution: {integrity: sha512-Fr2NAURYb3mWG8zE5k4KMC0spTtBJofK6PyF931dmhfuOHqFp1NrSf+U3GxOO+pN0cxObHHpW20lR1B4XiKgRw==}
 
-  '@stripe/react-stripe-js@3.10.0':
-    resolution: {integrity: sha512-UPqHZwMwDzGSax0ZI7XlxR3tZSpgIiZdk3CiwjbTK978phwR/fFXeAXQcN/h8wTAjR4ZIAzdlI9DbOqJhuJdeg==}
-    peerDependencies:
-      '@stripe/stripe-js': '>=1.44.1 <8.0.0'
-      react: '>=16.8.0 <20.0.0'
-      react-dom: '>=16.8.0 <20.0.0'
-
-  '@stripe/stripe-js@5.10.0':
-    resolution: {integrity: sha512-PTigkxMdMUP6B5ISS7jMqJAKhgrhZwjprDqR1eATtFfh0OpKVNp110xiH+goeVdrJ29/4LeZJR4FaHHWstsu0A==}
-    engines: {node: '>=12.16'}
-
   '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
 
@@ -2035,6 +2018,9 @@ packages:
 
   '@virtuoso.dev/urx@0.2.13':
     resolution: {integrity: sha512-iirJNv92A1ZWxoOHHDYW/1KPoi83939o83iUBQHIim0i3tMeSKEh+bxhJdTHQ86Mr4uXx9xGUTq69cp52ZP8Xw==}
+
+  '@whop/sdk@0.0.42':
+    resolution: {integrity: sha512-ZBtdGGIziRQa5WP9xk2qASPPhyBVKzS74IrHJ9hB8xKPwAKqY4Ca2XsA9QKjgXT7gNnGjKJADdBvcMGtnNG+JA==}
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -3153,6 +3139,9 @@ packages:
     resolution: {integrity: sha512-AC/7JofJvZGrrneWNaEnJeOLUx+JlGt7tNa0wZiRPT4MY1wmfKjt2+6O2p2uz2+skll8OZZmJMNqeke7kKbNgQ==}
     hasBin: true
 
+  jose@6.2.8:
+    resolution: {integrity: sha512-Bsdjwm3Qsd/P0jR+BHDe3LytDfY7WBq2HmCCLIwuVRHMuEC9ae7/R474GIUdF1NgCyZjzVo/A9DOiOBtXq8ZoQ==}
+
   jquery@4.0.0:
     resolution: {integrity: sha512-TXCHVR3Lb6TZdtw1l3RTLf8RBWVGexdxL6AC8/e0xZKEpBflBsjh9/8LXw+dkNFuOyW9B7iB3O1sP7hS0Kiacg==}
 
@@ -4249,10 +4238,6 @@ packages:
   strip-json-comments@3.1.1:
     resolution: {integrity: sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==}
     engines: {node: '>=8'}
-
-  stripe@17.7.0:
-    resolution: {integrity: sha512-aT2BU9KkizY9SATf14WhhYVv2uOapBWX0OFWF4xvcj1mPaNotlSc2CsxpS4DS46ZueSppmCF5BX1sNYBtwBvfw==}
-    engines: {node: '>=12.*'}
 
   strtok3@10.3.5:
     resolution: {integrity: sha512-ki4hZQfh5rX0QDLLkOCj+h+CVNkqmp/CMf8v8kZpkNVK6jGQooMytqzLZYUVYIZcFZ6yDB70EfD8POcFXiF5oA==}
@@ -6131,15 +6116,6 @@ snapshots:
 
   '@stream-io/worker-timer@1.2.5': {}
 
-  '@stripe/react-stripe-js@3.10.0(@stripe/stripe-js@5.10.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)':
-    dependencies:
-      '@stripe/stripe-js': 5.10.0
-      prop-types: 15.8.1
-      react: 19.2.7
-      react-dom: 19.2.7(react@19.2.7)
-
-  '@stripe/stripe-js@5.10.0': {}
-
   '@swc/helpers@0.5.15':
     dependencies:
       tslib: 2.8.1
@@ -6518,6 +6494,11 @@ snapshots:
       react: 19.2.7
 
   '@virtuoso.dev/urx@0.2.13': {}
+
+  '@whop/sdk@0.0.42':
+    dependencies:
+      jose: 6.2.8
+      standardwebhooks: 1.0.0
 
   abort-controller@3.0.0:
     dependencies:
@@ -7806,6 +7787,8 @@ snapshots:
       set-function-name: 2.0.2
 
   jiti@2.7.0: {}
+
+  jose@6.2.8: {}
 
   jquery@4.0.0:
     optional: true
@@ -9302,11 +9285,6 @@ snapshots:
   strip-bom@3.0.0: {}
 
   strip-json-comments@3.1.1: {}
-
-  stripe@17.7.0:
-    dependencies:
-      '@types/node': 20.19.43
-      qs: 6.15.3
 
   strtok3@10.3.5:
     dependencies:

@@ -7,15 +7,13 @@ import { cn } from '@/lib/utils'
 import { useWebinarStore } from '@/store/useWebinarStore'
 import { Search, X } from 'lucide-react'
 import React, { useState } from 'react'
-import Stripe from 'stripe'
 import type { VapiAssistantSummary } from '@/lib/vapi/types'
 import { CtaTypeEnum } from '@/generated/prisma/enums'
 type Props = {
-  stripeProducts: Stripe.Product[] | []
   assistants: VapiAssistantSummary[] | []
 }
 
-const CTAStep = ({ stripeProducts, assistants }: Props) => {
+const CTAStep = ({ assistants }: Props) => {
   const {
     formData,
     updateCTAField,
@@ -25,7 +23,7 @@ const CTAStep = ({ stripeProducts, assistants }: Props) => {
   } = useWebinarStore()
   const [tagInput, setTagInput] = useState('')
 
-  const { ctaLabel, tags, aiAgent, priceId, ctaType } = formData.cta
+  const { ctaLabel, tags, aiAgent, price, ctaType } = formData.cta
 
   const errors = getStepValidationErrors('cta')
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,8 +43,9 @@ const CTAStep = ({ stripeProducts, assistants }: Props) => {
     updateCTAField('ctaType', value as CtaTypeEnum)
   }
 
-  const handleProductChange = (value: string) => {
-    updateCTAField('priceId', value)
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    updateCTAField('price', value === '' ? undefined : Number(value))
   }
 
   const handleSelectAgent = (value: string) => {
@@ -180,47 +179,21 @@ const CTAStep = ({ stripeProducts, assistants }: Props) => {
       )}
       {ctaType === CtaTypeEnum.BUY_NOW && (
         <div className="space-y-2">
-          <Label>Attach an Product</Label>
-          <div className="relative">
-            <div className="mb-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="Search agents"
-                  className="pl-9 !bg-background/50 border border-input"
-                />
-              </div>
-            </div>
-
-            <Select
-              value={priceId}
-              onValueChange={handleProductChange}
-            >
-              <SelectTrigger className="w-full !bg-background/50 border border-input">
-                <SelectValue placeholder="Select an product" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border border-input max-h-48">
-                {stripeProducts?.length > 0 ? (
-                  stripeProducts.map((product) => (
-                    <SelectItem
-                      key={product.id}
-                      value={product?.default_price?.toString() || ''}
-                      className="!bg-background/50 hover:!bg-white/10"
-                    >
-                      {product.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem
-                    value=""
-                    disabled
-                  >
-                    Create product in stripe
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+          <Label htmlFor="price">Price (USD)</Label>
+          <Input
+            id="price"
+            type="number"
+            min="0"
+            step="0.01"
+            value={price ?? ''}
+            onChange={handlePriceChange}
+            placeholder="49.00"
+            className="!bg-background/50 border border-input"
+          />
+          <p className="text-xs text-muted-foreground">
+            Attendees pay this amount directly to your connected Whop
+            business.
+          </p>
         </div>
       )}
     </div>

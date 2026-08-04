@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { createCheckoutLink } from '@/actions/stripe'
+import { createCheckoutLink } from '@/actions/whop'
 import { logCtaClick } from '@/actions/engagement'
 import { toast } from 'sonner'
 import type { WebinarWithPresenter } from '@/lib/type'
@@ -48,12 +48,12 @@ const CTADialogBox = ({
       if (webinar.ctaType === 'BOOK_A_CALL') {
         router.push(`/live-webinar/${webinar.id}/call?attendeeId=${userId}`)
       } else {
-        if (!webinar.priceId || !webinar.presenter.stripeConnectId) {
-          return toast.error('No priceId or stripeConnectId found')
+        if (!webinar.price || !webinar.presenter.whopCompanyId) {
+          return toast.error('No price or connected Whop business found')
         }
         const session = await createCheckoutLink(
-          webinar.priceId,
-          webinar.presenter.stripeConnectId,
+          Number(webinar.price.toString()),
+          webinar.presenter.whopCompanyId,
           userId,
           webinar.id,
           true

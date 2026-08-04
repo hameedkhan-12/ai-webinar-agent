@@ -117,13 +117,20 @@ model User {
   email               String    @unique
   profileImage        String
   webinars            Webinar[] @relation("PresenterWebinars")
-  stripeConnectId     String?   @db.VarChar(255)
+  // Host's own Whop company/business ID. Used as the `company_id` for
+  // BUY_NOW marketplace checkouts, with our platform taking a cut via
+  // Whop's application_fee - the equivalent of Stripe Connect's
+  // connected-account model.
+  whopCompanyId       String?   @db.VarChar(255)
   lastLoginAt         DateTime?
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
   deletedAt           DateTime?
   subscription        Boolean   @default(false)
-  stripeCustomerId    String?   @db.VarChar(255)
+  // Whop's identifier for this host as a paying customer of our own
+  // platform subscription/add-on (not to be confused with whopCompanyId,
+  // which is the host's OWN business receiving payouts).
+  whopUserId          String?   @db.VarChar(255)
   // Paid add-on: lets this host clone/use custom voices for their agents,
   // billed separately from the base `subscription` flag.
   customVoiceEnabled  Boolean   @default(false)
@@ -153,9 +160,12 @@ model Webinar {
   couponEnabled   Boolean           @default(false)
   couponExpiry    DateTime?
   lockChat        Boolean           @default(false)
-  stripeProductId String?           @db.VarChar(255)
   aiAgentId       String?           @db.Uuid
-  priceId         String?           @db.VarChar(255)
+  // BUY_NOW price in the smallest sensible unit for the currency (we use
+  // plain dollars/decimal, e.g. 49.00) - Whop creates the actual checkout
+  // plan on demand from this amount when someone clicks Buy Now, rather
+  // than referencing a price pre-created in a dashboard ahead of time.
+  price           Decimal?          @db.Decimal(10, 2)
   recordingUrl    String?
   thumbnail       String?
   createdAt       DateTime          @default(now())

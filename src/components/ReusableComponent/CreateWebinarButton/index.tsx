@@ -13,16 +13,14 @@ import MultiStepForm from './MultiStepForm'
 import BasicInfoStep from './BasicInfoStep'
 import CTAStep from './CTAStep'
 import AdditionalInfoStep from './AdditionalInfoStep'
-import Stripe from 'stripe'
 import SuccessStep from './SuccessStep'
 import type { VapiAssistantSummary } from '@/lib/vapi/types'
 
 type Props = {
-  stripeProducts: Stripe.Product[] | []
   assistants: VapiAssistantSummary[] | []
 }
 
-const CreateWebinarButton = ({ stripeProducts, assistants }: Props) => {
+const CreateWebinarButton = ({ assistants }: Props) => {
   const { isModalOpen, setModalOpen, isComplete, setComplete, resetForm } =
     useWebinarStore()
 
@@ -44,7 +42,6 @@ const CreateWebinarButton = ({ stripeProducts, assistants }: Props) => {
       
         <CTAStep
           assistants={assistants}
-          stripeProducts={stripeProducts}
         />
       ),
     },

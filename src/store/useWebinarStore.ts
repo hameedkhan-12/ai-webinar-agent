@@ -20,7 +20,7 @@ export type WebinarFormState = {
     tags?: string[]
     ctaType: CtaTypeEnum
     aiAgent?: string
-    priceId?: string
+    price?: number
   }
   additionalInfo: {
     lockChat?: boolean
@@ -94,7 +94,7 @@ const initialState: WebinarFormState = {
     tags: [],
     ctaType: 'BOOK_A_CALL',
     aiAgent: '',
-    priceId: '',
+    price: undefined,
   },
   additionalInfo: {
     lockChat: false,

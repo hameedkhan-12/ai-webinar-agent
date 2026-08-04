@@ -1,99 +1,97 @@
-import { CallStatusEnum } from "@/generated/prisma/enums";
-import HomeIcon from "@/icons/HomeIcon";
-import LeadIcon from "@/icons/LeadIcon";
-import SettingsIcon from "@/icons/SettingsIcon";
-import { Sparkle, Webcam } from "lucide-react";
+import { CallStatusEnum } from '@/generated/prisma/enums'
+import HomeIcon from '@/icons/HomeIcon'
+import LeadIcon from '@/icons/LeadIcon'
+import SettingsIcon from '@/icons/SettingsIcon'
+import { Sparkle, Webcam } from 'lucide-react'
 export const sidebarData = [
   {
     id: 1,
-    title: "Home",
+    title: 'Home',
     icon: HomeIcon,
-    link: "/home",
+    link: '/home',
   },
   {
     id: 2,
-    title: "Webinars",
+    title: 'Webinars',
     icon: Webcam,
-    link: "/webinars",
+    link: '/webinars',
   },
   {
     id: 3,
-    title: "Leads",
+    title: 'Leads',
     icon: LeadIcon,
-    link: "/lead",
+    link: '/lead',
   },
   {
     id: 4,
-    title: "Ai Agents",
+    title: 'Ai Agents',
     icon: Sparkle,
-    link: "/ai-agents",
+    link: '/ai-agents',
   },
 
   {
     id: 5,
-    title: "Settings",
+    title: 'Settings',
     icon: SettingsIcon,
-    link: "/settings",
+    link: '/settings',
   },
-];
+]
 
 export const onBoardingSteps = [
-  { id: 1, title: "Create a webinar", complete: false, link: "" },
-  { id: 2, title: "Get leads", complete: false, link: "" },
-  { id: 3, title: "Conversion status", complete: false, link: "" },
-];
+  { id: 1, title: 'Create a webinar', complete: false, link: '' },
+  { id: 2, title: 'Get leads', complete: false, link: '' },
+  { id: 3, title: 'Conversion status', complete: false, link: '' },
+]
 
 export const potentialCustomer = [
   {
-    id: "1",
-    name: "John Doe",
-    email: "Johndoe@gmail.com",
-    clerkId: "1",
-    profileImage: "/vercel.svg",
+    id: '1',
+    name: 'John Doe',
+    email: 'Johndoe@gmail.com',
+    clerkId: '1',
+    profileImage: '/vercel.svg',
     isActive: true,
     lastLoginAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    tags: ["New", "Hot Lead"],
+    tags: ['New', 'Hot Lead'],
     callStatus: CallStatusEnum.COMPLETED,
   },
   {
-    id: "2",
-    name: "John Doe",
-    email: "Johndoe@gmail.com",
-    clerkId: "2",
-    profileImage: "/vercel.svg",
+    id: '2',
+    name: 'John Doe',
+    email: 'Johndoe@gmail.com',
+    clerkId: '2',
+    profileImage: '/vercel.svg',
     isActive: true,
     lastLoginAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    tags: ["New", "Hot Lead"],
+    tags: ['New', 'Hot Lead'],
     callStatus: CallStatusEnum.COMPLETED,
   },
   {
-    id: "3",
-    name: "John Doe",
-    email: "Johndoe@gmail.com",
-    clerkId: "3",
-    profileImage: "/vercel.svg",
+    id: '3',
+    name: 'John Doe',
+    email: 'Johndoe@gmail.com',
+    clerkId: '3',
+    profileImage: '/vercel.svg',
     isActive: true,
     lastLoginAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     deletedAt: null,
-    tags: ["New", "Hot Lead"],
+    tags: ['New', 'Hot Lead'],
     callStatus: CallStatusEnum.COMPLETED,
   },
-];
+]
 
-export const subscriptionPriceId = `price_1SBg3TB19MZcYLMDsRIz3BzT`;
-
-// TODO: replace with the real Stripe Price ID for the custom-voice-cloning
-// add-on, created in the Stripe dashboard (a recurring monthly price is
-// the natural fit, matching the base subscription).
-export const customVoiceAddonPriceId = `price_REPLACE_WITH_REAL_ADDON_PRICE_ID`;
+// Platform pricing now lives in src/actions/whop.ts as plain USD amounts
+// (PLATFORM_SUBSCRIPTION_PRICE_USD, CUSTOM_VOICE_ADDON_PRICE_USD) - Whop
+// creates checkout plans inline, so there's no dashboard-created price ID
+// to reference here the way Stripe's model required.
 
 export const aiAgentPrompt = `# Lead Qualification & Nurturing Agent Prompt
 
@@ -268,4 +266,4 @@ Only offer a team call as a secondary option if they aren’t ready to buy now.
 Use friendly, professional tone with subtle authority — be a trusted advisor, not a pushy salesperson.
 
 Be flexible in adjusting how each pillar is framed — but never alter the core offer or guarantees.
-`;
+`

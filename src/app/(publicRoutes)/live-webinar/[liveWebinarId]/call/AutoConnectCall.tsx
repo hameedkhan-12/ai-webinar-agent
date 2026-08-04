@@ -1,6 +1,6 @@
 'use client'
 import { changeCallStatus } from '@/actions/attendance'
-import { createCheckoutLink } from '@/actions/stripe'
+import { createCheckoutLink } from '@/actions/whop'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { CallStatusEnum } from '@/generated/prisma/enums'
@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { vapi } from '@/lib/vapi/vapiclient'
 import { buildEngagementCallOverrides } from '@/lib/vapi/buildCallOverrides'
 import { Bot, Clock, Loader2, Mic, MicOff, PhoneOff } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 const CallStatus = {
@@ -185,12 +185,12 @@ const AutoConnectCall = ({
 
   const checkoutLink = async () => {
     try {
-      if (!webinar?.priceId || !webinar?.presenter?.stripeConnectId) {
-        return toast.error('No priceId or stripeConnectId found')
+      if (!webinar?.price || !webinar?.presenter?.whopCompanyId) {
+        return toast.error('No price or connected Whop business found')
       }
       const session = await createCheckoutLink(
-        webinar.priceId,
-        webinar?.presenter?.stripeConnectId,
+        Number(webinar.price.toString()),
+        webinar?.presenter?.whopCompanyId,
         userId,
         webinar.id
       )

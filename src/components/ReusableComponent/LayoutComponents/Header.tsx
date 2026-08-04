@@ -8,20 +8,16 @@ import React from 'react'
 import PurpleIcon from '../PurpleIcon'
 import LightningIcon from '@/icons/LightningIcon'
 import CreateWebinarButton from '../CreateWebinarButton'
-import Stripe from 'stripe'
 
-import { StripeElements } from '../Stripe/Element'
 import SubscriptionModal from '../SubscriptionModal'
 import type { VapiAssistantSummary } from '@/lib/vapi/types'
 
 type Props = {
   user: User
-  stripeProducts: Stripe.Product[] | []
   assistants: VapiAssistantSummary[] | []
 }
 
-//TODO: Stripe Subscription, Assistant,
-const Header = ({ user, stripeProducts, assistants }: Props) => {
+const Header = ({ user, assistants }: Props) => {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -47,14 +43,9 @@ const Header = ({ user, stripeProducts, assistants }: Props) => {
         </PurpleIcon>
 
         {user.subscription ? (
-          <CreateWebinarButton
-            stripeProducts={stripeProducts}
-            assistants={assistants}
-          />
+          <CreateWebinarButton assistants={assistants} />
         ) : (
-          <StripeElements>
-            <SubscriptionModal user={user} />
-          </StripeElements>
+          <SubscriptionModal user={user} />
         )}
       </div>
     </div>

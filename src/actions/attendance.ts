@@ -117,7 +117,6 @@ export const getWebinarAttendance = async (
             name: attendance.user.name,
             email: attendance.user.email,
             attendedAt: attendance.joinedAt,
-            stripeConnectId: null,
             callStatus: attendance.callStatus,
             createdAt: attendance.user.createdAt,
             updatedAt: attendance.user.updatedAt,
