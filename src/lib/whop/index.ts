@@ -37,22 +37,15 @@ export async function createCheckout({
     )
   }
 
-  if (price < 1) {
-    throw new Error('Whop requires a checkout price of at least $1.00')
-  }
-
-  const normalizedPrice = Number(price.toFixed(2))
-
   const checkout = await whop.checkoutConfigurations.create({
     currency,
     account_id: companyId,
     plan: {
-      initial_price: normalizedPrice,
+      initial_price: price,
       plan_type: planType,
       currency,
       ...(planType === 'renewal'
         ? {
-            renewal_price: normalizedPrice,
             billing_period: billingPeriodDays ?? 30,
             product: {
               title: productTitle!,

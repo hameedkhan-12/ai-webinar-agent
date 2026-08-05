@@ -224,9 +224,7 @@ model EngagementEvent {
   attendanceId String              @db.Uuid
   attendance   Attendance          @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
   type         EngagementEventType
-  // Freeform per-type data, e.g. { "text": "..." } for CHAT_MESSAGE,
-  // { "ctaType": "BOOK_A_CALL" } for CTA_CLICK,
-  // { "seconds": 180 } for WATCH_PROGRESS.
+  
   payload      Json
   createdAt    DateTime            @default(now())
 
