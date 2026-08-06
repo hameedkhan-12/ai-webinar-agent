@@ -1,7 +1,6 @@
 'use client'
 import Spotlight from '@/icons/Spotlight'
 import { usePathname } from 'next/navigation'
-import React from 'react'
 import { sidebarData } from '@/lib/data'
 import {
   Tooltip,
@@ -11,6 +10,7 @@ import {
 } from '@/components/ui/tooltip'
 import Link from 'next/link'
 import { UserButton } from '@clerk/nextjs'
+import ThemeToggle from './ThemeToggle'
 
 const Sidebar = () => {
   const pathname = usePathname()
@@ -45,7 +45,10 @@ const Sidebar = () => {
             </TooltipProvider>
           ))}
         </div>
-        <UserButton />
+        <div className="flex flex-col items-center gap-3">
+          <ThemeToggle />
+          <UserButton />
+        </div>
       </div>
     </div>
   )

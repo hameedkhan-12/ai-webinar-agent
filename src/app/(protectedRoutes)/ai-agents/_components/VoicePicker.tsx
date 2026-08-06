@@ -8,7 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Lock, Mic, Plus } from 'lucide-react'
+import { Lock, Mic, Plus, Settings2 } from 'lucide-react'
+import Link from 'next/link'
 import type { User } from '@/generated/prisma/client'
 import VoiceUploadModal from './VoiceUploadModal'
 import CustomVoiceAddonModal from '@/components/ReusableComponent/CustomVoiceAddOnModel'
@@ -136,6 +137,14 @@ const VoicePicker = ({ user, assistantId, value, onChange }: Props) => {
           plan.
         </p>
       )}
+
+      <Link
+        href="/ai-agents/voices"
+        className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+      >
+        <Settings2 className="h-3 w-3" />
+        Manage all voices
+      </Link>
 
       <VoiceUploadModal
         open={uploadOpen}

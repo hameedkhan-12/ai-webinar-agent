@@ -2,7 +2,48 @@ import { prisma } from '@/lib/prismaClient'
 import { onAuthenticateUser } from '@/actions/auth'
 import { getVapiServer } from '@/lib/vapi/vapiServer'
 import { STOCK_VOICE } from '@/lib/vapi/constants'
-import { deleteAudio } from '@/lib/r2'
+import { deleteAudio, getSignedAudioUrl } from '@/lib/r2'
+
+export async function GET(
+  _request: Request,
+  { params }: { params: Promise<{ voiceId: string }> }
+) {
+  const currentUser = await onAuthenticateUser()
+  if (!currentUser.user) {
+    return new Response('Unauthorized', { status: 401 })
+  }
+
+  const { voiceId } = await params
+
+  const voice = await prisma.voice.findUnique({
+    where: { id: voiceId },
+    select: { userId: true, r2ObjectKey: true },
+  })
+
+  if (!voice || voice.userId !== currentUser.user.id) {
+    return new Response('Not found', { status: 404 })
+  }
+
+  if (!voice.r2ObjectKey) {
+    return new Response('Voice audio is not available yet', { status: 409 })
+  }
+
+  const signedUrl = await getSignedAudioUrl(voice.r2ObjectKey)
+  const audioResponse = await fetch(signedUrl)
+
+  if (!audioResponse.ok) {
+    return new Response('Failed to fetch voice audio', { status: 502 })
+  }
+
+  const contentType = audioResponse.headers.get('content-type') || 'audio/wav'
+
+  return new Response(audioResponse.body, {
+    headers: {
+      'Content-Type': contentType,
+      'Cache-Control': 'private, max-age=3600',
+    },
+  })
+}
 
 export async function DELETE(
   _request: Request,
