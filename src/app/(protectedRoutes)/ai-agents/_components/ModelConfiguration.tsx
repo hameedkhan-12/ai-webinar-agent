@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useAiAgentStore } from '@/store/useAiAgentStore'
 import { Info, Loader2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import type { User } from '@/generated/prisma/client'
 import ConfigField from './ConfigField'
@@ -22,15 +23,45 @@ const ModelConfiguration = ({ user }: Props) => {
   const [systemPrompt, setSystemPrompt] = useState('')
   const [customVoiceId, setCustomVoiceId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  // Set once by the "Use on agent" link from the Voices page
+  // (/ai-agents?voiceId=xyz) - captured on first render so it survives
+  // even if no assistant is selected yet, then applied as soon as one is.
+  const [pendingVoiceId, setPendingVoiceId] = useState(() =>
+    searchParams.get('voiceId')
+  )
+  // While true, tells VoicePicker to trust customVoiceId as-is instead of
+  // auto-syncing it from the assistant's currently saved voice - otherwise
+  // that fetch (which resolves after this effect runs) would silently
+  // overwrite the voice we just deep-linked in with whatever was already
+  // saved on the server.
+  const [skipServerVoiceSync, setSkipServerVoiceSync] = useState(false)
 
   useEffect(() => {
     if (assistant) {
       setFirstMessage(assistant?.firstMessage || '')
       setSystemPrompt(assistant?.model?.messages?.[0]?.content || '')
-      // Reset on agent switch - VoicePicker will repopulate this from the
-      // newly selected assistant's actual config via its own fetch.
-      setCustomVoiceId(null)
+
+      if (pendingVoiceId) {
+        // Reset on agent switch - VoicePicker will repopulate this from the
+        // newly selected assistant's actual config via its own fetch,
+        // unless we arrived here with a specific voice to apply (only
+        // ever applied once, to whichever agent is selected first).
+        setCustomVoiceId(pendingVoiceId)
+        setSkipServerVoiceSync(true)
+        toast.info(
+          'Voice selected - click "Update Assistant" to apply it to this agent.'
+        )
+        setPendingVoiceId(null)
+        // Strip the query param too, so refreshing doesn't re-trigger this.
+        router.replace('/ai-agents', { scroll: false })
+      } else {
+        setCustomVoiceId(null)
+        setSkipServerVoiceSync(false)
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assistant])
 
   if (!assistant) {
@@ -122,6 +153,7 @@ const ModelConfiguration = ({ user }: Props) => {
           assistantId={assistant.id}
           value={customVoiceId}
           onChange={setCustomVoiceId}
+          skipServerSync={skipServerVoiceSync}
         />
       </div>
 

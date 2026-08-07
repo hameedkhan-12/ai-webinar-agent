@@ -1,6 +1,5 @@
 import { onAuthenticateUser } from '@/actions/auth'
 import { getWebinarById } from '@/actions/webinar'
-import React from 'react'
 import RenderWebinar from './_components/RenderWebinar'
 import { WebinarWithPresenter } from '@/lib/type'
 import { WebinarStatusEnum } from '@/generated/prisma/enums'

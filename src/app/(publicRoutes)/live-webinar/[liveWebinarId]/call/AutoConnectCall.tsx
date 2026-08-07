@@ -224,9 +224,6 @@ const AutoConnectCall = ({
 
   // Call setup & cleanup
   useEffect(() => {
-    // A pending deferred teardown from a previous (fake) cleanup means
-    // we're the Strict Mode remount right after it - cancel that
-    // teardown, the call session is still meant to be running.
     if (pendingStopRef.current) {
       clearTimeout(pendingStopRef.current)
       pendingStopRef.current = undefined

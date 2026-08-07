@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, Pause, Play, Trash2, Wand2 } from "lucide-react";
+import Link from "next/link";
+import { Bot, MoreHorizontal, Pause, Play, Trash2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -21,12 +22,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Spinner } from "@/components/ui/spinner";
 import { VoiceAvatar } from "@/components/voice-avatar/voice-avatar";
 import { VOICE_CATEGORY_LABELS } from "@/lib/voiceCategories";
-import type { VoiceCategory } from "@/generated/prisma/enums";
-import { useAudioPlayback } from "@/hooks/use-audio-playbook";
-import { Spinner } from "@/components/ui/spinner";
 import { VoicePreviewDialog } from "./voice-preview-dialog";
+import type { VoiceCategory, VoiceVariant } from "@/generated/prisma/enums";
+import { useAudioPlayback } from "@/hooks/use-audio-playbook";
 
 export type VoiceItem = {
   id: string;
@@ -34,6 +35,7 @@ export type VoiceItem = {
   description: string | null;
   category: VoiceCategory;
   language: string;
+  variant: VoiceVariant;
   createdAt: string | Date;
 };
 
@@ -121,6 +123,20 @@ export function VoiceCard({ voice, onDeleted }: VoiceCardProps) {
       </div>
 
       <div className="ml-1 flex shrink-0 items-center gap-1 lg:ml-3 lg:gap-2">
+        <Link href={`/ai-agents?voiceId=${voice.id}`}>
+          <Button variant="outline" size="sm" className="hidden rounded-full lg:inline-flex">
+            <Bot className="size-4" />
+            Use on agent
+          </Button>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="rounded-full lg:hidden"
+            title="Use on agent"
+          >
+            <Bot className="size-4" />
+          </Button>
+        </Link>
         <Button
           variant="outline"
           size="icon-sm"
@@ -148,16 +164,19 @@ export function VoiceCard({ voice, onDeleted }: VoiceCardProps) {
               <Wand2 className="size-4 text-foreground" />
               <span className="font-medium">Test with custom text</span>
             </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => setShowDeleteDialog(true)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="size-4 text-destructive" />
-              <span className="font-medium">Delete voice</span>
-            </DropdownMenuItem>
+            {voice.variant === "CUSTOM" && (
+              <DropdownMenuItem
+                onClick={() => setShowDeleteDialog(true)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="size-4 text-destructive" />
+                <span className="font-medium">Delete voice</span>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
+        {voice.variant === "CUSTOM" && (
         <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -183,6 +202,7 @@ export function VoiceCard({ voice, onDeleted }: VoiceCardProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        )}
       </div>
 
       <VoicePreviewDialog

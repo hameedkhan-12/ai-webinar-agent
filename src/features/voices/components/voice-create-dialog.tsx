@@ -30,9 +30,6 @@ interface VoiceCreateDialogProps {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onCreated?: (voice: { id: string; name: string }) => void;
-  /** Called instead of the default toast when creation fails because the
-   * custom-voice add-on isn't active yet, so the caller can surface its
-   * own upgrade modal. */
   onSubscriptionRequired?: () => void;
 }
 

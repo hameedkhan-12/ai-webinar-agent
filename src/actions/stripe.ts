@@ -98,9 +98,6 @@ export const onGetStripeClientSecret = async (
   }
 }
 
-// Same pattern as onGetStripeClientSecret, but creates a separate Stripe
-// subscription on the custom-voice add-on price, so it's billed and can
-// be cancelled independently of the base platform subscription.
 export const onGetCustomVoiceAddonClientSecret = async (
   email: string,
   userId: string

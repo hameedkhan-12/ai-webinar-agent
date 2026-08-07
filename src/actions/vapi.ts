@@ -32,7 +32,12 @@ const assertCanUseCustomVoice = async (voiceId: string) => {
     )
   }
   const voice = await prisma.voice.findUnique({ where: { id: voiceId } })
-  if (!voice || voice.userId !== currentUser.user.id) {
+  if (!voice) {
+    throw new Error('Voice not found')
+  }
+  // SYSTEM (built-in) voices have no owner and are shared across all
+  // entitled users - only CUSTOM (cloned) voices are ownership-checked.
+  if (voice.variant === 'CUSTOM' && voice.userId !== currentUser.user.id) {
     throw new Error('Voice not found')
   }
   return { userId: currentUser.user.id, voiceId }

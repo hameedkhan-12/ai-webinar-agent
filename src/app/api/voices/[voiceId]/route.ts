@@ -17,10 +17,16 @@ export async function GET(
 
   const voice = await prisma.voice.findUnique({
     where: { id: voiceId },
-    select: { userId: true, r2ObjectKey: true },
+    select: { userId: true, variant: true, r2ObjectKey: true },
   })
 
-  if (!voice || voice.userId !== currentUser.user.id) {
+  if (!voice) {
+    return new Response('Not found', { status: 404 })
+  }
+
+  // SYSTEM (built-in) voices are shared - only CUSTOM (cloned) voices are
+  // ownership-checked.
+  if (voice.variant === 'CUSTOM' && voice.userId !== currentUser.user.id) {
     return new Response('Not found', { status: 404 })
   }
 
@@ -40,7 +46,10 @@ export async function GET(
   return new Response(audioResponse.body, {
     headers: {
       'Content-Type': contentType,
-      'Cache-Control': 'private, max-age=3600',
+      'Cache-Control':
+        voice.variant === 'SYSTEM'
+          ? 'public, max-age=86400'
+          : 'private, max-age=3600',
     },
   })
 }
@@ -82,8 +91,6 @@ export async function DELETE(
   if (voice.r2ObjectKey) {
     await deleteAudio(voice.r2ObjectKey).catch((error) => {
       console.error('Failed to delete voice sample from R2:', error)
-      // Non-fatal - proceed with deleting the DB record regardless, an
-      // orphaned R2 object is a minor cleanup issue, not a correctness one.
     })
   }
 

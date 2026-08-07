@@ -25,6 +25,12 @@ export async function generateSpeech({
   repetitionPenalty = 1.2,
   normLoudness = true,
 }: GenerateSpeechParams): Promise<Buffer> {
+  if (!process.env.CHATTERBOX_API_URL || !process.env.CHATTERBOX_API_KEY) {
+    throw new Error(
+      'CHATTERBOX_API_URL / CHATTERBOX_API_KEY are not configured - deploy chatterbox_tts.py to Modal and set both env vars before custom voice generation (live calls or previews) can work.'
+    )
+  }
+
   const response = await fetch(`${process.env.CHATTERBOX_API_URL}/generate`, {
     method: 'POST',
     headers: {

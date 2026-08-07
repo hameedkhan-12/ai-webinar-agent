@@ -46,6 +46,7 @@ export async function createCheckout({
       currency,
       ...(planType === 'renewal'
         ? {
+            renewal_price: price,
             billing_period: billingPeriodDays ?? 30,
             product: {
               title: productTitle!,

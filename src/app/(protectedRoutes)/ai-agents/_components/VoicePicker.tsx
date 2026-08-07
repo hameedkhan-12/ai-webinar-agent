@@ -4,7 +4,9 @@ import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -19,6 +21,12 @@ type VoiceSummary = {
   name: string
 }
 
+type VoicesResponse = {
+  custom: VoiceSummary[]
+  system: VoiceSummary[]
+  currentVoiceId: string | null
+}
+
 type Props = {
   user: User
   /** Pass the assistant's Vapi ID when editing an existing agent, so the
@@ -27,12 +35,23 @@ type Props = {
   /** null = stock voice */
   value: string | null
   onChange: (voiceId: string | null) => void
+  /** When true, don't auto-apply the assistant's currently saved voice on
+   * load - the caller has already set `value` deliberately (e.g. from a
+   * "Use on agent" deep link) and it shouldn't be clobbered. */
+  skipServerSync?: boolean
 }
 
 const STOCK_VOICE_VALUE = '__stock__'
 
-const VoicePicker = ({ user, assistantId, value, onChange }: Props) => {
-  const [voices, setVoices] = useState<VoiceSummary[]>([])
+const VoicePicker = ({
+  user,
+  assistantId,
+  value,
+  onChange,
+  skipServerSync,
+}: Props) => {
+  const [customVoices, setCustomVoices] = useState<VoiceSummary[]>([])
+  const [systemVoices, setSystemVoices] = useState<VoiceSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [addonModalOpen, setAddonModalOpen] = useState(false)
@@ -45,15 +64,18 @@ const VoicePicker = ({ user, assistantId, value, onChange }: Props) => {
       const res = await fetch(`/api/voices${params}`)
       if (!res.ok) return
 
-      const data: { voices: VoiceSummary[]; currentVoiceId: string | null } =
-        await res.json()
-      setVoices(data.voices)
+      const data: VoicesResponse = await res.json()
+      setCustomVoices(data.custom)
+      setSystemVoices(data.system)
 
       // Only auto-apply the server's current selection once, on first
       // load for the edit flow - don't stomp on a value the user then
-      // changes themselves on a later refetch.
+      // changes themselves on a later refetch, or one the caller has
+      // already deliberately set (skipServerSync).
       if (assistantId && !hasAppliedServerValue) {
-        if (data.currentVoiceId) onChange(data.currentVoiceId)
+        if (!skipServerSync && data.currentVoiceId) {
+          onChange(data.currentVoiceId)
+        }
         setHasAppliedServerValue(true)
       }
     } catch (error) {
@@ -120,14 +142,26 @@ const VoicePicker = ({ user, assistantId, value, onChange }: Props) => {
               Stock voice (default)
             </span>
           </SelectItem>
-          {voices.map((voice) => (
-            <SelectItem
-              key={voice.id}
-              value={voice.id}
-            >
-              {voice.name}
-            </SelectItem>
-          ))}
+          {customVoices.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>Your cloned voices</SelectLabel>
+              {customVoices.map((voice) => (
+                <SelectItem key={voice.id} value={voice.id}>
+                  {voice.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
+          {systemVoices.length > 0 && (
+            <SelectGroup>
+              <SelectLabel>Built-in voices</SelectLabel>
+              {systemVoices.map((voice) => (
+                <SelectItem key={voice.id} value={voice.id}>
+                  {voice.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          )}
         </SelectContent>
       </Select>
 
@@ -150,7 +184,10 @@ const VoicePicker = ({ user, assistantId, value, onChange }: Props) => {
         open={uploadOpen}
         onOpenChange={setUploadOpen}
         onCreated={(voice) => {
-          setVoices((prev) => [{ id: voice.id, name: voice.name }, ...prev])
+          setCustomVoices((prev) => [
+            { id: voice.id, name: voice.name },
+            ...prev,
+          ])
           onChange(voice.id)
         }}
         onSubscriptionRequired={() => setAddonModalOpen(true)}
