@@ -9,12 +9,26 @@ import { STOCK_VOICE } from '@/lib/vapi/constants'
 
 const CUSTOM_VOICE_TIMEOUT_SECONDS = 8
 
+// Strip any trailing slash so we never build a double-slash URL below (e.g.
+// when APP_URL is an ngrok tunnel that includes a trailing "/").
+const getAppUrl = () => (process.env.APP_URL ?? '').replace(/\/+$/, '')
+
 const buildCustomVoiceConfig = (assistantId: string) => ({
   provider: 'custom-voice' as const,
   server: {
-    url: `${process.env.APP_URL}/api/vapi/voice/${assistantId}`,
+    url: `${getAppUrl()}/api/vapi/voice/${assistantId}`,
     secret: process.env.VAPI_CUSTOM_VOICE_SECRET,
     timeoutSeconds: CUSTOM_VOICE_TIMEOUT_SECONDS,
+    // Required when APP_URL points at an ngrok tunnel: ngrok's free tier
+    // serves an HTML "visit site" interstitial instead of proxying the
+    // request for any client it doesn't recognize as a real browser. Vapi's
+    // server-to-server voice request would otherwise receive that HTML page
+    // instead of raw PCM audio, which corrupts the call's audio pipeline
+    // and gets the call ejected ("Meeting ended due to ejection") - this
+    // header tells ngrok to skip that page and proxy straight through.
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+    },
   },
   fallbackPlan: {
     voices: [STOCK_VOICE],
