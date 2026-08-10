@@ -208,6 +208,10 @@ const AutoConnectCall = ({
   const startCall = async () => {
     try {
       setCallStatus(CallStatus.CONNECTING)
+      // Warm up custom voice container (Chatterbox Modal GPU) before starting call
+      // to ensure Vapi's 30s room startup timeout is not exceeded by a cold start container.
+      await fetch(`/api/vapi/voice/${assistantId}`, { cache: 'no-store' }).catch(() => { })
+
       const overrides = buildEngagementCallOverrides(engagementSummary)
       await vapi.start(assistantId, overrides)
       const res = await changeCallStatus(userId, webinar.id, CallStatusEnum.InProgress)
@@ -306,7 +310,7 @@ const AutoConnectCall = ({
       vapi.off('speech-end', onSpeechEnd)
       vapi.off('error', onError)
     }
-     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userName, callTimeLimit])
 
   return (
@@ -400,8 +404,8 @@ const AutoConnectCall = ({
                   isMicMuted
                     ? 'border-destructive/50'
                     : userIsSpeaking
-                    ? 'border-accent-secondary'
-                    : 'border-accent-secondary/50'
+                      ? 'border-accent-secondary'
+                      : 'border-accent-secondary/50'
                 )}
               >
                 <Avatar className="w-[100px] h-[100px]">
@@ -455,8 +459,8 @@ const AutoConnectCall = ({
                     timeRemaining < 30
                       ? 'text-destructive animate-pulse'
                       : timeRemaining < 60
-                      ? 'text-amber-500'
-                      : 'text-muted-foreground'
+                        ? 'text-amber-500'
+                        : 'text-muted-foreground'
                   )}
                 >
                   {formatTime(timeRemaining)} remaining

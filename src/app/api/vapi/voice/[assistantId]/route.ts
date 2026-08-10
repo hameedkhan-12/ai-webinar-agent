@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prismaClient'
-import { generateSpeech } from '@/lib/chatterbox'
+import { generateSpeech, pingChatterbox } from '@/lib/chatterbox'
 import { wavToPcm16 } from '@/lib/wavToPcm'
 import { NextRequest } from 'next/server'
 
@@ -11,7 +11,24 @@ type VapiVoiceRequestBody = {
   }
 }
 
-const GENERATION_TIMEOUT_MS = 26000
+const GENERATION_TIMEOUT_MS = 55000
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ assistantId: string }> }
+) {
+  const { assistantId } = await params
+  const config = await prisma.agentVoiceConfig.findUnique({
+    where: { assistantId },
+  })
+
+  if (!config) {
+    return Response.json({ status: 'no_custom_voice' })
+  }
+
+  const pinged = await pingChatterbox()
+  return Response.json({ status: 'ok', warmed: pinged })
+}
 
 export async function POST(
   request: NextRequest,
@@ -53,7 +70,7 @@ export async function POST(
       status: 404,
     })
   }
-try {
+  try {
     const wavBuffer = await Promise.race([
       generateSpeech({ prompt: text, voiceKey: config.voice.r2ObjectKey }),
       new Promise<never>((_, reject) =>

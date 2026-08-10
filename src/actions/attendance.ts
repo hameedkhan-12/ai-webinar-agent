@@ -336,3 +336,176 @@ export const changeCallStatus = async (
     }
   }
 }
+
+export type LeadRecord = {
+  id: string
+  attendeeId: string
+  name: string
+  email: string
+  webinarId: string
+  webinarTitle: string
+  webinarTags: string[]
+  attendedType: AttendedTypeEnum
+  callStatus: CallStatusEnum
+  joinedAt: Date
+  createdAt: Date
+}
+
+export const getAllLeadsForUser = async (userId: string) => {
+  try {
+    if (!userId) {
+      return { success: false, status: 400, message: 'Missing userId', data: [] }
+    }
+
+    const attendances = await prisma.attendance.findMany({
+      where: {
+        webinar: {
+          presenterId: userId,
+        },
+      },
+      include: {
+        user: true,
+        webinar: {
+          select: {
+            id: true,
+            title: true,
+            tags: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    const leads: LeadRecord[] = attendances.map((att) => ({
+      id: att.id,
+      attendeeId: att.attendeeId,
+      name: att.user.name,
+      email: att.user.email,
+      webinarId: att.webinarId,
+      webinarTitle: att.webinar.title,
+      webinarTags: att.webinar.tags || [],
+      attendedType: att.attendedType,
+      callStatus: att.callStatus,
+      joinedAt: att.joinedAt,
+      createdAt: att.createdAt,
+    }))
+
+    return {
+      success: true,
+      status: 200,
+      data: leads,
+    }
+  } catch (error) {
+    console.error('Failed to fetch leads for user:', error)
+    return {
+      success: false,
+      status: 500,
+      message: 'Failed to fetch leads',
+      data: [],
+    }
+  }
+}
+
+export const getDashboardMetrics = async (userId: string) => {
+  try {
+    if (!userId) {
+      return {
+        success: false,
+        status: 400,
+        message: 'Missing userId',
+      }
+    }
+
+    const [
+      totalWebinars,
+      totalLeads,
+      completedCalls,
+      inProgressCalls,
+      recentAttendances,
+      registeredCount,
+      attendedCount,
+    ] = await Promise.all([
+      prisma.webinar.count({
+        where: { presenterId: userId },
+      }),
+      prisma.attendance.count({
+        where: { webinar: { presenterId: userId } },
+      }),
+      prisma.attendance.count({
+        where: {
+          webinar: { presenterId: userId },
+          callStatus: CallStatusEnum.COMPLETED,
+        },
+      }),
+      prisma.attendance.count({
+        where: {
+          webinar: { presenterId: userId },
+          callStatus: CallStatusEnum.InProgress,
+        },
+      }),
+      prisma.attendance.findMany({
+        where: { webinar: { presenterId: userId } },
+        include: {
+          user: true,
+          webinar: {
+            select: {
+              id: true,
+              title: true,
+              tags: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+      }),
+      prisma.attendance.count({
+        where: {
+          webinar: { presenterId: userId },
+          attendedType: AttendedTypeEnum.REGISTERED,
+        },
+      }),
+      prisma.attendance.count({
+        where: {
+          webinar: { presenterId: userId },
+          attendedType: AttendedTypeEnum.ATTENDED,
+        },
+      }),
+    ])
+
+    const conversionRate = totalLeads > 0 ? Math.round((completedCalls / totalLeads) * 100) : 0
+
+    return {
+      success: true,
+      status: 200,
+      data: {
+        totalWebinars,
+        totalLeads,
+        completedCalls,
+        inProgressCalls,
+        conversionRate,
+        registeredCount,
+        attendedCount,
+        recentAttendances: recentAttendances.map((att) => ({
+          id: att.id,
+          attendeeId: att.attendeeId,
+          name: att.user.name,
+          email: att.user.email,
+          webinarTitle: att.webinar.title,
+          tags: att.webinar.tags || [],
+          callStatus: att.callStatus,
+          attendedType: att.attendedType,
+          createdAt: att.createdAt,
+        })),
+      },
+    }
+  } catch (error) {
+    console.error('Error fetching dashboard metrics:', error)
+    return {
+      success: false,
+      status: 500,
+      message: 'Failed to fetch metrics',
+    }
+  }
+}

@@ -2,7 +2,7 @@ import 'dotenv/config'
 import { getVapiServer } from '../src/lib/vapi/vapiServer'
 import { prisma } from '../src/lib/prismaClient'
 
-const CUSTOM_VOICE_TIMEOUT_SECONDS = 30
+const CUSTOM_VOICE_TIMEOUT_SECONDS = 60
 const getAppUrl = () => (process.env.APP_URL ?? '').replace(/\/+$/, '')
 
 const buildCustomVoiceConfig = (assistantId: string) => ({
@@ -42,7 +42,7 @@ async function main() {
     voice: buildCustomVoiceConfig(assistantId),
     serverMessages: [],
   })
-  console.log('Pushed updated voice config to Vapi:', JSON.stringify(updated.voice, null, 2))
+  console.log('Pushed updated voice config to Vapi:', JSON.stringify((updated as any).voice, null, 2))
 
   const userId = voice.userId
   if (!userId) {

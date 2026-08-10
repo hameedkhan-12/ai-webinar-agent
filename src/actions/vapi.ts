@@ -16,7 +16,7 @@ import { STOCK_VOICE } from '@/lib/vapi/constants'
 // way it does for explicit non-2xx responses (it has ended the whole call
 // with `endedReason: "timeout of Nms exceeded"` in testing instead) - so
 // this needs real headroom rather than a tight budget.
-const CUSTOM_VOICE_TIMEOUT_SECONDS = 30
+const CUSTOM_VOICE_TIMEOUT_SECONDS = 60
 
 // Strip any trailing slash so we never build a double-slash URL below (e.g.
 // when APP_URL is an ngrok tunnel that includes a trailing "/").

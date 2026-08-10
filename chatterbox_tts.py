@@ -143,6 +143,11 @@ class Chatterbox:
             allow_headers=["*"],
         )
 
+        @web_app.get("/health")
+        @web_app.get("/ping")
+        def health_check():
+            return {"status": "ok"}
+
         @web_app.post("/generate", responses={200: {"content": {"audio/wav": {}}}})
         def generate_speech(request: TTSRequest):
             voice_path = Path(R2_MOUNT_PATH) / request.voice_key

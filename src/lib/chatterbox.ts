@@ -16,6 +16,29 @@ type GenerateSpeechParams = {
  * short (one sentence/chunk) to minimize perceived latency, and rely on
  * Vapi's fallbackPlan in case this call is too slow or fails.
  */
+/**
+ * Pings the Chatterbox TTS Modal endpoint to warm up the GPU container on cold starts.
+ */
+export async function pingChatterbox(): Promise<boolean> {
+  if (!process.env.CHATTERBOX_API_URL || !process.env.CHATTERBOX_API_KEY) {
+    return false
+  }
+
+  try {
+    const response = await fetch(`${process.env.CHATTERBOX_API_URL}/ping`, {
+      method: 'GET',
+      headers: {
+        'x-api-key': process.env.CHATTERBOX_API_KEY,
+      },
+      signal: AbortSignal.timeout(35000),
+    })
+    return response.ok
+  } catch (error) {
+    console.warn('Chatterbox ping failed or timed out:', error)
+    return false
+  }
+}
+
 export async function generateSpeech({
   prompt,
   voiceKey,

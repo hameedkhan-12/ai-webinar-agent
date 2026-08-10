@@ -83,6 +83,7 @@ export async function DELETE(
       voice.agentVoiceConfigs.map((config) =>
         vapiServer.assistants.update(config.assistantId, {
           voice: STOCK_VOICE,
+          serverMessages: [],
         })
       )
     )

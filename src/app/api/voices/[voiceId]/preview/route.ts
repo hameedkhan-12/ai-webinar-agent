@@ -7,7 +7,7 @@ const previewSchema = z.object({
   text: z.string().min(1).max(300),
 })
 
-const GENERATION_TIMEOUT_MS = 20000
+const GENERATION_TIMEOUT_MS = 45000
 
 export async function POST(
   request: Request,

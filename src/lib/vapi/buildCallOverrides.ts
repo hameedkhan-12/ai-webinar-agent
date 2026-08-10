@@ -1,5 +1,6 @@
-import type { AssistantOverrides } from '@vapi-ai/web'
+import type { vapi } from './vapiclient'
 
+export type AssistantOverrides = NonNullable<Parameters<typeof vapi.start>[1]>
 
 export function buildEngagementCallOverrides(
   engagementSummary: string | null | undefined
