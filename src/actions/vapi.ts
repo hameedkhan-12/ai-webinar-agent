@@ -7,7 +7,16 @@ import { onAuthenticateUser } from './auth'
 import { getAssistantId, toAssistantSummary } from '@/lib/vapi/types'
 import { STOCK_VOICE } from '@/lib/vapi/constants'
 
-const CUSTOM_VOICE_TIMEOUT_SECONDS = 8
+// Chatterbox now caches each voice's conditioning across requests (see
+// chatterbox_tts.py), so repeat turns using an already-seen voice should be
+// fast - but the *first* utterance for a voice (or the first request after
+// a container cold-starts) still pays the full prepare_conditionals cost,
+// which has measured as high as ~18s for a longer sentence. Vapi does NOT
+// reliably fall back to fallbackPlan.voices on a server.url *timeout* the
+// way it does for explicit non-2xx responses (it has ended the whole call
+// with `endedReason: "timeout of Nms exceeded"` in testing instead) - so
+// this needs real headroom rather than a tight budget.
+const CUSTOM_VOICE_TIMEOUT_SECONDS = 30
 
 // Strip any trailing slash so we never build a double-slash URL below (e.g.
 // when APP_URL is an ngrok tunnel that includes a trailing "/").

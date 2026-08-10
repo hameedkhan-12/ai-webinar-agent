@@ -11,16 +11,12 @@ type VapiVoiceRequestBody = {
   }
 }
 
-// Keep this well under the timeoutSeconds we configure on the assistant's
-// voice.server.timeoutSeconds, so we fail fast and let Vapi's
-// fallbackPlan take over instead of the call going silent.
-const GENERATION_TIMEOUT_MS = 6000
+const GENERATION_TIMEOUT_MS = 26000
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ assistantId: string }> }
 ) {
-  // Verify this request actually came from Vapi.
   const vapiSecret = request.headers.get('x-vapi-secret')
   if (
     !process.env.VAPI_CUSTOM_VOICE_SECRET ||
@@ -47,7 +43,6 @@ export async function POST(
   if (!text || !sampleRate) {
     return new Response('Missing text or sampleRate', { status: 400 })
   }
-
   const config = await prisma.agentVoiceConfig.findUnique({
     where: { assistantId },
     include: { voice: true },
@@ -58,8 +53,7 @@ export async function POST(
       status: 404,
     })
   }
-
-  try {
+try {
     const wavBuffer = await Promise.race([
       generateSpeech({ prompt: text, voiceKey: config.voice.r2ObjectKey }),
       new Promise<never>((_, reject) =>
@@ -72,7 +66,7 @@ export async function POST(
 
     const pcmBuffer = wavToPcm16(wavBuffer, sampleRate)
 
-    return new Response(pcmBuffer, {
+    return new Response(new Uint8Array(pcmBuffer), {
       status: 200,
       headers: {
         'Content-Type': 'application/octet-stream',
@@ -83,8 +77,6 @@ export async function POST(
       `Custom voice generation failed for assistant ${assistantId}:`,
       error
     )
-    // Non-2xx here triggers Vapi's fallbackPlan (stock voice) for this
-    // turn rather than leaving the call silent.
     return new Response('Voice generation failed', { status: 500 })
   }
 }

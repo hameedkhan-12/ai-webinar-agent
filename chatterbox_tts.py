@@ -41,6 +41,9 @@ app = modal.App("chatterbox-tts", image=image)
 with image.imports():
     import io
     import os
+    import threading
+    import time
+    from collections import OrderedDict
     from pathlib import Path
 
     import torchaudio as ta
@@ -80,6 +83,14 @@ with image.imports():
         norm_loudness: bool = Field(default=True)
 
 
+# Upper bound on how many distinct voices' conditioning we keep cached in
+# GPU memory at once (see self._conditionals_cache below). Each entry is
+# small (a speaker embedding + short token/feature tensors), so this is a
+# generous cap purely to prevent unbounded growth on a long-lived warm
+# container serving many different cloned voices over time.
+MAX_CACHED_VOICES = 50
+
+
 @app.cls(
     gpu="a10g",
     scaledown_window=60 * 5,
@@ -95,6 +106,26 @@ class Chatterbox:
     @modal.enter()
     def load_model(self):
         self.model = ChatterboxTurboTTS.from_pretrained(device="cuda")
+        # `model.generate(..., audio_prompt_path=...)` calls
+        # `prepare_conditionals()` internally on *every* call, which runs the
+        # voice encoder + s3gen reference-audio embedding over the reference
+        # wav from scratch. That step dominates latency (measured 4-8s+ per
+        # request in production, largely independent of text length) and is
+        # identical for every request reusing the same voice. We cache the
+        # resulting `Conditionals` per voice so repeat calls skip straight to
+        # generation, which is what actually needs to run per-request.
+        self._conditionals_cache = OrderedDict()
+        # `model.generate()` mutates the shared `model.conds` attribute
+        # rather than taking conditioning as an argument, so it isn't safe
+        # to call concurrently for two different voices on the same model
+        # instance (`@modal.concurrent(max_inputs=10)` allows overlapping
+        # requests in one container) - a second request could swap out
+        # `model.conds` while a first request's generation is still reading
+        # it, silently mixing up voices. This lock serializes the
+        # conditioning-swap + generate() critical section; since generation
+        # is GPU-bound anyway (and a single GPU largely serializes compute
+        # regardless), this doesn't meaningfully reduce throughput.
+        self._generate_lock = threading.Lock()
 
     @modal.asgi_app()
     def serve(self):
@@ -154,15 +185,45 @@ class Chatterbox:
         repetition_penalty: float = 1.2,
         norm_loudness: bool = True,
     ):
-        wav = self.model.generate(
-            prompt,
-            audio_prompt_path=audio_prompt_path,
-            temperature=temperature,
-            top_p=top_p,
-            top_k=top_k,
-            repetition_penalty=repetition_penalty,
-            norm_loudness=norm_loudness,
-        )
+        # Turbo ignores exaggeration/cfg_weight entirely (see tts_turbo.py),
+        # but norm_loudness also affects how the *reference* audio itself is
+        # prepped inside prepare_conditionals, so it's part of the cache key
+        # too - otherwise a request with a different norm_loudness could
+        # silently reuse conditioning prepared under the wrong setting.
+        exaggeration = 0.0
+        cache_key = (audio_prompt_path, exaggeration, norm_loudness)
+
+        with self._generate_lock:
+            cached_conds = self._conditionals_cache.get(cache_key)
+            t0 = time.monotonic()
+            if cached_conds is not None:
+                # Re-insert at the end so this entry counts as most-recently-used.
+                self._conditionals_cache.move_to_end(cache_key)
+                self.model.conds = cached_conds
+                print(f"[timing] conditioning cache HIT for {audio_prompt_path}")
+            else:
+                self.model.prepare_conditionals(
+                    audio_prompt_path,
+                    exaggeration=exaggeration,
+                    norm_loudness=norm_loudness,
+                )
+                self._conditionals_cache[cache_key] = self.model.conds
+                if len(self._conditionals_cache) > MAX_CACHED_VOICES:
+                    self._conditionals_cache.popitem(last=False)
+                print(f"[timing] conditioning cache MISS for {audio_prompt_path}, prepare_conditionals took {time.monotonic() - t0:.2f}s")
+
+            t1 = time.monotonic()
+            # No audio_prompt_path here - that would force a redundant
+            # prepare_conditionals() call, undoing the caching above. The
+            # model reuses self.conds, which we just set.
+            wav = self.model.generate(
+                prompt,
+                temperature=temperature,
+                top_p=top_p,
+                top_k=top_k,
+                repetition_penalty=repetition_penalty,
+                norm_loudness=norm_loudness,
+            )
 
         buffer = io.BytesIO()
         ta.save(buffer, wav, self.model.sr, format="wav")
