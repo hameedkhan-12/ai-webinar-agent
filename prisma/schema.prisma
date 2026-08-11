@@ -136,6 +136,7 @@ model User {
   customVoiceEnabled  Boolean   @default(false)
   voices              Voice[]
   agentVoiceConfigs   AgentVoiceConfig[]
+  integrations        UserIntegration[]
 
   @@index([email])
   @@index([clerkId])
@@ -230,4 +231,23 @@ model EngagementEvent {
 
   @@index([attendanceId])
   @@index([attendanceId, type])
+}
+
+// Stores per-user integration connections (HubSpot, Mailchimp, Zapier, etc.)
+// config is an opaque JSON blob whose schema is defined by each integration's
+// registry entry (configFields[]). Never expose raw config to the client.
+model UserIntegration {
+  id            String   @id @default(cuid())
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// e.g. "hubspot", "mailchimp", "zapier"
+  integrationId String
+  enabled       Boolean  @default(true)
+  /// JSON bag of credentials: { apiKey, listId, webhookUrl, … }
+  config        Json     @default("{}")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, integrationId])
+  @@index([userId])
 }
