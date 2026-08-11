@@ -1,3 +1,5 @@
+'use client'
+
 import RightIcon from '@/icons/RightIcon'
 import Link from 'next/link'
 import React from 'react'
@@ -13,25 +15,25 @@ const FeatureSectionLayout = ({
   children,
   heading,
   link,
-  className,
+  className = '',
 }: Props) => {
   return (
     <div
-      className={`p-10 flex items-center justify-between flex-col gap-10 border rounded-3xl border-border bg-background-10 ${className}`}
+      className={`p-6 rounded-2xl border border-border/60 bg-card shadow-xs flex flex-col justify-between space-y-6 ${className}`}
     >
-      {children}
-
-      <div className="w-full justify-between items-center flex flex-wrap gap-10">
-        <h3 className="sm:w-[70%] font-semibold text-3xl text-primary">
+      <div className="flex items-center justify-between">
+        <h3 className="font-semibold text-base text-foreground tracking-tight">
           {heading}
         </h3>
         <Link
           href={link}
-          className="text-primary font-semibold text-lg flex items-center justify-center rounded-md opacity-50"
+          className="text-xs font-semibold text-accent-primary hover:text-accent-primary/80 flex items-center gap-1 transition-colors"
         >
-          View <RightIcon className="ml-2 w-6 h-6" />
+          View details <RightIcon className="w-4 h-4 ml-0.5" />
         </Link>
       </div>
+
+      <div className="w-full">{children}</div>
     </div>
   )
 }
