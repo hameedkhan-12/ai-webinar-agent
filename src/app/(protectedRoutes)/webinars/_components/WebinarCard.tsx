@@ -1,7 +1,7 @@
 import PipelineIcon from '@/icons/PipelineIcon'
 import { Webinar } from '@/generated/prisma/client'
 import { format } from 'date-fns'
-import { Calendar } from 'lucide-react'
+import { Brain, Calendar } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
@@ -47,12 +47,22 @@ const WebinarCard = ({ webinar }: Props) => {
           </div>
         </Link>
 
-        <Link
-          href={`/webinars/${webinar?.id}/pipeline`}
-          className="flex px-4 py-2 rounded-md border-[0.5px] border-border bg-secondary"
-        >
-          <PipelineIcon className="w-4 h-4" />
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href={`/webinars/${webinar?.id}/insights`}
+            className="flex px-3 py-2 rounded-md border-[0.5px] border-border bg-secondary hover:bg-secondary/80 transition-colors"
+            title="Objection Intelligence Insights"
+          >
+            <Brain className="w-4 h-4 text-accent-primary" />
+          </Link>
+          <Link
+            href={`/webinars/${webinar?.id}/pipeline`}
+            className="flex px-3 py-2 rounded-md border-[0.5px] border-border bg-secondary hover:bg-secondary/80 transition-colors"
+            title="Lead Pipeline"
+          >
+            <PipelineIcon className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
     </div>
   )

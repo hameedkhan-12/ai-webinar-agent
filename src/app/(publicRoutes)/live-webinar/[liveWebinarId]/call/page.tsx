@@ -1,6 +1,8 @@
 import { getAttendeeById } from '@/actions/attendance'
 import { getWebinarById } from '@/actions/webinar'
 import { buildEngagementSummary } from '@/actions/engagement'
+import { getObjectionInsights } from '@/actions/objections'
+import { buildObjectionPlaybookString } from '@/lib/vapi/buildCallOverrides'
 import { WebinarWithPresenter } from '@/lib/type'
 import { CallStatusEnum, WebinarStatusEnum } from '@/generated/prisma/enums'
 import { redirect } from 'next/navigation'
@@ -58,13 +60,21 @@ const page = async ({ params, searchParams }: Props) => {
     ? engagementSummaryResult.data
     : undefined
 
+  // Fetch top objection insights for this webinar to arm the AI agent
+  const objectionInsightsResult = await getObjectionInsights(liveWebinarId)
+  const objectionPlaybook = objectionInsightsResult.success
+    ? buildObjectionPlaybookString(objectionInsightsResult.data)
+    : undefined
+
   return (
     <AutoConnectCall
       userName={attendee.data.name}
       assistantId={webinar.aiAgentId}
       webinar={webinar as WebinarWithPresenter}
       userId={attendeeId}
+      attendanceId={attendee.data.attendanceId}
       engagementSummary={engagementSummary}
+      objectionPlaybook={objectionPlaybook}
     />
   )
 }

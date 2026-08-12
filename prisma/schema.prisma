@@ -41,6 +41,12 @@ enum CallStatusEnum {
   COMPLETED
 }
 
+enum CallTranscriptProcessingStatusEnum {
+  TRANSCRIPT_SAVED
+  CLASSIFIED
+  FOLLOWED_UP
+}
+
 // --- Custom voice cloning (merged from Resonance) ---
 
 enum VoiceVariant {
@@ -174,6 +180,7 @@ model Webinar {
   deletedAt       DateTime?
   Attendee        Attendee?         @relation(fields: [attendeeId], references: [id])
   attendeeId      String?           @db.Uuid
+  objections      Objection[]
 
   @@index([presenterId])
   @@index([aiAgentId])
@@ -207,11 +214,54 @@ model Attendance {
   attendeeId   String           @db.Uuid
   userId       String?          @db.Uuid
 
-  engagementEvents EngagementEvent[]
+  engagementEvents   EngagementEvent[]
+  callTranscripts    CallTranscript[]
+  objectionInstances ObjectionInstance[]
 
   @@unique([attendeeId, webinarId]) // ✅ This enforces 1 attendee per webinar
   @@index([webinarId])
   @@index([attendedType])
+}
+
+model CallTranscript {
+  id               String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attendanceId     String                             @db.Uuid
+  attendance       Attendance                         @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  vapiCallId       String                             @unique
+  transcript       String                             @db.Text
+  durationSeconds  Int?
+  processingStatus CallTranscriptProcessingStatusEnum @default(TRANSCRIPT_SAVED)
+  createdAt        DateTime                           @default(now())
+
+  @@index([attendanceId])
+}
+
+model Objection {
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  webinarId   String              @db.Uuid
+  webinar     Webinar             @relation(fields: [webinarId], references: [id], onDelete: Cascade)
+  label       String
+  description String              @db.Text
+  createdAt   DateTime            @default(now())
+  instances   ObjectionInstance[]
+
+  @@unique([webinarId, label])
+  @@index([webinarId])
+}
+
+model ObjectionInstance {
+  id                String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  objectionId       String     @db.Uuid
+  objection         Objection  @relation(fields: [objectionId], references: [id], onDelete: Cascade)
+  attendanceId      String     @db.Uuid
+  attendance        Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  transcriptExcerpt String     @db.Text
+  aiResponse        String     @db.Text
+  converted         Boolean    @default(false)
+  createdAt         DateTime   @default(now())
+
+  @@index([objectionId])
+  @@index([attendanceId])
 }
 
 enum EngagementEventType {

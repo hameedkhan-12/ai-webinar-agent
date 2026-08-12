@@ -2,10 +2,14 @@
 
 import { EngagementEventType } from '@/generated/prisma/enums'
 import { prisma } from '@/lib/prismaClient'
+import {
+  enforcePublicLiveWebinarWriteRateLimit,
+  RateLimitExceededError,
+} from '@/lib/redis/rateLimit'
 
 type ActionResult<T = undefined> =
   | { success: true; status: 200; data: T }
-  | { success: false; status: 400 | 404 | 500; message: string }
+  | { success: false; status: 400 | 404 | 429 | 500; message: string }
 
 // --- Guardrails -------------------------------------------------------
 // These endpoints are reachable from public, unauthenticated attendee
@@ -40,6 +44,8 @@ export const logChatMessage = async (
   text: string
 ): Promise<ActionResult> => {
   try {
+    await enforcePublicLiveWebinarWriteRateLimit()
+
     const trimmed = text.trim().slice(0, MAX_CHAT_TEXT_LENGTH)
     if (!trimmed) {
       return { success: false, status: 400, message: 'Empty message' }
@@ -60,6 +66,10 @@ export const logChatMessage = async (
 
     return { success: true, status: 200, data: undefined }
   } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { success: false, status: 429, message: error.message }
+    }
+
     console.error('Error logging chat message engagement:', error)
     return { success: false, status: 500, message: 'Failed to log chat message' }
   }
@@ -75,6 +85,8 @@ export const logCtaClick = async (
   ctaType: string
 ): Promise<ActionResult> => {
   try {
+    await enforcePublicLiveWebinarWriteRateLimit()
+
     const attendanceId = await resolveAttendanceId(attendeeId, webinarId)
     if (!attendanceId) {
       return { success: false, status: 404, message: 'Attendance not found' }
@@ -90,6 +102,10 @@ export const logCtaClick = async (
 
     return { success: true, status: 200, data: undefined }
   } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { success: false, status: 429, message: error.message }
+    }
+
     console.error('Error logging CTA click engagement:', error)
     return { success: false, status: 500, message: 'Failed to log CTA click' }
   }
@@ -106,6 +122,8 @@ export const logWatchProgress = async (
   secondsWatched: number
 ): Promise<ActionResult> => {
   try {
+    await enforcePublicLiveWebinarWriteRateLimit()
+
     const clamped = Math.max(0, Math.min(Math.round(secondsWatched), MAX_WATCH_SECONDS))
 
     const attendanceId = await resolveAttendanceId(attendeeId, webinarId)
@@ -123,6 +141,10 @@ export const logWatchProgress = async (
 
     return { success: true, status: 200, data: undefined }
   } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return { success: false, status: 429, message: error.message }
+    }
+
     console.error('Error logging watch progress engagement:', error)
     return { success: false, status: 500, message: 'Failed to log watch progress' }
   }

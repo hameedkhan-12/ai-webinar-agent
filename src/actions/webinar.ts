@@ -3,6 +3,7 @@
 import { WebinarFormState } from '@/store/useWebinarStore'
 import { onAuthenticateUser } from './auth'
 import { prisma } from '@/lib/prismaClient'
+import { invalidateDashboardMetrics } from '@/lib/redis/dashboardMetricsCache'
 import { revalidatePath } from 'next/cache'
 import { WebinarStatusEnum } from '@/generated/prisma/enums'
 
@@ -85,6 +86,7 @@ export const createWebinar = async (formData: WebinarFormState) => {
         presenterId: presenterId,
       },
     })
+    await invalidateDashboardMetrics(presenterId)
     revalidatePath('/')
     return {
       status: 200,

@@ -1,5 +1,35 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Required infrastructure
+
+This app requires **PostgreSQL** and **Redis** — both are mandatory, not optional. If either is unreachable, affected routes fail fast (health check returns 503; no silent fallbacks).
+
+For local development, start both services with Docker Compose:
+
+```bash
+docker compose up -d
+```
+
+Copy `.env.example` to `.env` and set `DATABASE_URL` and `REDIS_URL` (defaults work with the Docker Compose services above).
+
+Verify connectivity:
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+Expected response when healthy: `{"status":"ok","checks":{"database":"ok","redis":"ok"}}`
+
+### Background worker (post-call processing)
+
+The post-call pipeline (objection classification + follow-up) runs in a separate BullMQ worker process — not inside the Next.js server:
+
+```bash
+pnpm worker
+```
+
+Run this alongside `pnpm dev` whenever testing Vapi end-of-call webhooks.
+
 ## Getting Started
 
 First, run the development server:

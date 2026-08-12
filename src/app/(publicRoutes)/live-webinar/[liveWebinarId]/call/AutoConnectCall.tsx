@@ -25,7 +25,9 @@ type Props = {
   callTimeLimit?: number
   webinar: WebinarWithPresenter
   userId: string
+  attendanceId?: string
   engagementSummary?: string
+  objectionPlaybook?: string
 }
 
 const AutoConnectCall = ({
@@ -35,7 +37,9 @@ const AutoConnectCall = ({
   callTimeLimit = 3000,
   webinar,
   userId,
+  attendanceId,
   engagementSummary,
+  objectionPlaybook,
 }: Props) => {
   const [callStatus, setCallStatus] = useState(CallStatus.CONNECTING)
   const [assistantIsSpeaking, setAssistantIsSpeaking] = useState(false)
@@ -212,7 +216,19 @@ const AutoConnectCall = ({
       // to ensure Vapi's 30s room startup timeout is not exceeded by a cold start container.
       await fetch(`/api/vapi/voice/${assistantId}`, { cache: 'no-store' }).catch(() => { })
 
-      const overrides = buildEngagementCallOverrides(engagementSummary)
+      const baseOverrides = buildEngagementCallOverrides(engagementSummary, objectionPlaybook)
+      const overrides = {
+        ...baseOverrides,
+        metadata: {
+          ...(baseOverrides?.metadata as Record<string, unknown> | undefined),
+          attendanceId,
+          webinarId: webinar.id,
+        },
+        variableValues: {
+          ...baseOverrides?.variableValues,
+          attendanceId: attendanceId || '',
+        },
+      }
       await vapi.start(assistantId, overrides)
       const res = await changeCallStatus(userId, webinar.id, CallStatusEnum.InProgress)
       if (!res.success) {

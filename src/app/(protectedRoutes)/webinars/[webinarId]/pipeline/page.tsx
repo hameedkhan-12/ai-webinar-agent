@@ -2,7 +2,9 @@ import { getWebinarAttendance } from '@/actions/attendance'
 import PageHeader from '@/components/ReusableComponent/PageHeader'
 import LeadIcon from '@/icons/LeadIcon'
 import PipelineIcon from '@/icons/PipelineIcon'
-import { HomeIcon } from 'lucide-react'
+import { Brain, HomeIcon } from 'lucide-react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 import React from 'react'
 import PipelineLayout from './_components/PipelineLayout'
 import { AttendedTypeEnum } from '@/generated/prisma/client'
@@ -35,7 +37,13 @@ const page = async ({ params }: Props) => {
         rightIcon={<HomeIcon className="w-3 h-3" />}
         heading="Keep track of all of your customers"
         placeholder="Search Name, Tag or Email"
-      />
+      >
+        <Link href={`/webinars/${webinarId}/insights`}>
+          <Button variant="outline" className="gap-2 border-border bg-secondary">
+            <Brain className="w-4 h-4 text-accent-primary" /> Objection Insights
+          </Button>
+        </Link>
+      </PageHeader>
       <div className="flex overflow-x-auto pb-4 gap-4 md:gap-6">
         {Object.entries(pipelineData.data).map(([columnType, columnData]) => (
           <PipelineLayout

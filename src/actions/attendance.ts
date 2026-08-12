@@ -2,6 +2,16 @@
 
 import { AttendedTypeEnum, CallStatusEnum, CtaTypeEnum } from '@/generated/prisma/enums'
 import { prisma } from '@/lib/prismaClient'
+import { getActiveCallCountForUser, markCallActive, markCallEnded } from '@/lib/redis/presence'
+import {
+  getCachedDashboardMetrics,
+  invalidateDashboardMetrics,
+  setCachedDashboardMetrics,
+} from '@/lib/redis/dashboardMetricsCache'
+import {
+  enforcePublicLiveWebinarWriteRateLimit,
+  RateLimitExceededError,
+} from '@/lib/redis/rateLimit'
 import { AttendanceData } from '@/lib/type'
 import { revalidatePath } from 'next/cache'
 
@@ -151,6 +161,8 @@ export const registerAttendee = async ({
   name: string
 }) => {
   try {
+    await enforcePublicLiveWebinarWriteRateLimit()
+
     if (!webinarId || !email) {
       return {
         success: false,
@@ -218,6 +230,14 @@ export const registerAttendee = async ({
       message: 'Successfully Registered',
     }
   } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return {
+        success: false,
+        status: 429,
+        message: error.message,
+      }
+    }
+
     console.error('Registration error:', error)
     return {
       success: false,
@@ -244,7 +264,16 @@ export const changeAttendanceType = async (
       data: {
         attendedType,
       },
+      include: {
+        webinar: {
+          select: { presenterId: true },
+        },
+      },
     })
+
+    if (attendedType === AttendedTypeEnum.CONVERTED) {
+      await invalidateDashboardMetrics(attendance.webinar.presenterId)
+    }
 
     return {
       success: true,
@@ -290,7 +319,7 @@ export const getAttendeeById = async (id: string, webinarId: string) => {
       status: 200,
       success: true,
       message: 'Get attendee details successful',
-      data: { ...attendee, callStatus: attendance.callStatus },
+      data: { ...attendee, callStatus: attendance.callStatus, attendanceId: attendance.id },
     }
   } catch (error) {
     console.log('Error', error)
@@ -308,6 +337,8 @@ export const changeCallStatus = async (
   callStatus: CallStatusEnum
 ) => {
   try {
+    await enforcePublicLiveWebinarWriteRateLimit()
+
     const attendance = await prisma.attendance.update({
       where: {
         attendeeId_webinarId: {
@@ -320,6 +351,12 @@ export const changeCallStatus = async (
       },
     })
 
+    if (callStatus === CallStatusEnum.InProgress) {
+      await markCallActive(attendance.id, webinarId)
+    } else if (callStatus === CallStatusEnum.COMPLETED) {
+      await markCallEnded(attendance.id, webinarId)
+    }
+
     return {
       success: true,
       status: 200,
@@ -327,6 +364,14 @@ export const changeCallStatus = async (
       data: attendance,
     }
   } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return {
+        success: false,
+        status: 429,
+        message: error.message,
+      }
+    }
+
     console.error('Error updating call status:', error)
     return {
       success: false,
@@ -408,6 +453,103 @@ export const getAllLeadsForUser = async (userId: string) => {
   }
 }
 
+export type DashboardMetricsData = {
+  totalWebinars: number
+  totalLeads: number
+  completedCalls: number
+  inProgressCalls: number
+  conversionRate: number
+  registeredCount: number
+  attendedCount: number
+  recentAttendances: Array<{
+    id: string
+    attendeeId: string
+    name: string
+    email: string
+    webinarTitle: string
+    tags: string[]
+    callStatus: CallStatusEnum
+    attendedType: AttendedTypeEnum
+    createdAt: string
+  }>
+}
+
+async function computeDashboardMetrics(userId: string): Promise<DashboardMetricsData> {
+  const [
+    totalWebinars,
+    totalLeads,
+    completedCalls,
+    inProgressCalls,
+    recentAttendances,
+    registeredCount,
+    attendedCount,
+  ] = await Promise.all([
+    prisma.webinar.count({
+      where: { presenterId: userId },
+    }),
+    prisma.attendance.count({
+      where: { webinar: { presenterId: userId } },
+    }),
+    prisma.attendance.count({
+      where: {
+        webinar: { presenterId: userId },
+        callStatus: CallStatusEnum.COMPLETED,
+      },
+    }),
+    getActiveCallCountForUser(userId),
+    prisma.attendance.findMany({
+      where: { webinar: { presenterId: userId } },
+      include: {
+        user: true,
+        webinar: {
+          select: {
+            id: true,
+            title: true,
+            tags: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+    }),
+    prisma.attendance.count({
+      where: {
+        webinar: { presenterId: userId },
+        attendedType: AttendedTypeEnum.REGISTERED,
+      },
+    }),
+    prisma.attendance.count({
+      where: {
+        webinar: { presenterId: userId },
+        attendedType: AttendedTypeEnum.ATTENDED,
+      },
+    }),
+  ])
+
+  const conversionRate = totalLeads > 0 ? Math.round((completedCalls / totalLeads) * 100) : 0
+
+  return {
+    totalWebinars,
+    totalLeads,
+    completedCalls,
+    inProgressCalls,
+    conversionRate,
+    registeredCount,
+    attendedCount,
+    recentAttendances: recentAttendances.map((att) => ({
+      id: att.id,
+      attendeeId: att.attendeeId,
+      name: att.user.name,
+      email: att.user.email,
+      webinarTitle: att.webinar.title,
+      tags: att.webinar.tags || [],
+      callStatus: att.callStatus,
+      attendedType: att.attendedType,
+      createdAt: att.createdAt.toISOString(),
+    })),
+  }
+}
+
 export const getDashboardMetrics = async (userId: string) => {
   try {
     if (!userId) {
@@ -418,87 +560,23 @@ export const getDashboardMetrics = async (userId: string) => {
       }
     }
 
-    const [
-      totalWebinars,
-      totalLeads,
-      completedCalls,
-      inProgressCalls,
-      recentAttendances,
-      registeredCount,
-      attendedCount,
-    ] = await Promise.all([
-      prisma.webinar.count({
-        where: { presenterId: userId },
-      }),
-      prisma.attendance.count({
-        where: { webinar: { presenterId: userId } },
-      }),
-      prisma.attendance.count({
-        where: {
-          webinar: { presenterId: userId },
-          callStatus: CallStatusEnum.COMPLETED,
-        },
-      }),
-      prisma.attendance.count({
-        where: {
-          webinar: { presenterId: userId },
-          callStatus: CallStatusEnum.InProgress,
-        },
-      }),
-      prisma.attendance.findMany({
-        where: { webinar: { presenterId: userId } },
-        include: {
-          user: true,
-          webinar: {
-            select: {
-              id: true,
-              title: true,
-              tags: true,
-            },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 6,
-      }),
-      prisma.attendance.count({
-        where: {
-          webinar: { presenterId: userId },
-          attendedType: AttendedTypeEnum.REGISTERED,
-        },
-      }),
-      prisma.attendance.count({
-        where: {
-          webinar: { presenterId: userId },
-          attendedType: AttendedTypeEnum.ATTENDED,
-        },
-      }),
-    ])
+    const cached = await getCachedDashboardMetrics<DashboardMetricsData>(userId)
 
-    const conversionRate = totalLeads > 0 ? Math.round((completedCalls / totalLeads) * 100) : 0
+    if (cached) {
+      return {
+        success: true,
+        status: 200,
+        data: cached,
+      }
+    }
+
+    const data = await computeDashboardMetrics(userId)
+    await setCachedDashboardMetrics(userId, data)
 
     return {
       success: true,
       status: 200,
-      data: {
-        totalWebinars,
-        totalLeads,
-        completedCalls,
-        inProgressCalls,
-        conversionRate,
-        registeredCount,
-        attendedCount,
-        recentAttendances: recentAttendances.map((att) => ({
-          id: att.id,
-          attendeeId: att.attendeeId,
-          name: att.user.name,
-          email: att.user.email,
-          webinarTitle: att.webinar.title,
-          tags: att.webinar.tags || [],
-          callStatus: att.callStatus,
-          attendedType: att.attendedType,
-          createdAt: att.createdAt,
-        })),
-      },
+      data,
     }
   } catch (error) {
     console.error('Error fetching dashboard metrics:', error)
