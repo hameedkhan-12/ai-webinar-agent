@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { createWebinar } from '@/actions/webinar'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+
 type Step = {
   id: string
   title: string
@@ -72,7 +73,7 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
         router.refresh()
       } catch (error) {
         console.error('Error creating webinar:', error)
-        toast.success('Failed to create webinar. Please try again.')
+        toast.error('Failed to create webinar. Please try again.')
         setValidationError('Failed to create webinar. Please try again.')
       } finally {
         setSubmitting(false)
@@ -83,19 +84,17 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
   }
 
   return (
-    <div className="flex flex-col justify-center items-center bg-[#27272A]/20 border border-border rounded-3xl overflow-hidden max-w-6xl mx-auto backdrop-blur-[106px]">
-      <div className="flex items-center justify-start">
-        <div className="w-full md:w-1/3 p-6">
+    <div className="mx-auto flex max-w-6xl flex-col overflow-hidden rounded-3xl border border-border bg-card shadow-xl">
+      <div className="flex items-stretch justify-start">
+        <div className="hidden w-full border-r border-border bg-muted/30 p-6 md:block md:w-1/3">
           <div className="space-y-6">
             {steps.map((step, index) => {
               const isCompleted = completedSteps.includes(step.id)
               const isCurrent = index === currentStepIndex
               const isPast = index < currentStepIndex
+
               return (
-                <div
-                  key={step.id}
-                  className="relative"
-                >
+                <div key={step.id} className="relative">
                   <div className="flex items-start gap-4">
                     <div className="relative">
                       <motion.div
@@ -103,14 +102,12 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
                         animate={{
                           backgroundColor:
                             isCurrent || isCompleted
-                              ? 'rgb(147, 51, 234)'
-                              : 'rgb(31, 41, 55)',
-                          scale: [isCurrent && !isCompleted ? 0.8 : 1, 1],
-                          transition: { duration: 0.3 },
+                              ? 'var(--accent-primary)'
+                              : 'var(--muted)',
+                          scale: isCurrent && !isCompleted ? [0.92, 1] : 1,
                         }}
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
-                        className="flex items-center justify-center w-8 h-8 rounded-full z-10"
+                        transition={{ duration: 0.3 }}
+                        className="z-10 flex h-8 w-8 items-center justify-center rounded-full border border-border/60"
                       >
                         <AnimatePresence mode="wait">
                           {isCompleted ? (
@@ -121,7 +118,7 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
                               exit={{ opacity: 0, scale: 0.5 }}
                               transition={{ duration: 0.2 }}
                             >
-                              <Check className="w-5 h-5 text-white" />
+                              <Check className="h-4 w-4 text-white" />
                             </motion.div>
                           ) : (
                             <motion.div
@@ -130,29 +127,23 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
                               animate={{ opacity: 1, scale: 1 }}
                               exit={{ opacity: 0, scale: 0.5 }}
                               transition={{ duration: 0.2 }}
-                              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                              // @ts-ignore
-                              className="text-white"
+                              className={cn(
+                                'text-xs font-semibold',
+                                isCurrent ? 'text-white' : 'text-muted-foreground'
+                              )}
                             >
-                              <Check className="w-5 h-5 text-white/50" />
+                              {index + 1}
                             </motion.div>
                           )}
                         </AnimatePresence>
                       </motion.div>
                       {index < steps.length - 1 && (
-                        <div className="absolute top-8 left-4 w-0.5 h-16 bg-gray-700 overflow-hidden">
+                        <div className="absolute left-4 top-8 h-16 w-0.5 overflow-hidden bg-border">
                           <motion.div
-                            initial={{
-                              height: isPast || isCompleted ? '100%' : '0%',
-                            }}
-                            animate={{
-                              height: isPast || isCompleted ? '100%' : '0%',
-                              backgroundColor: 'rgb(147, 51, 234)',
-                            }}
+                            initial={{ height: isPast || isCompleted ? '100%' : '0%' }}
+                            animate={{ height: isPast || isCompleted ? '100%' : '0%' }}
                             transition={{ duration: 0.5, ease: 'easeInOut' }}
-                            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                            // @ts-ignore
-                            className="w-full h-full"
+                            className="h-full w-full bg-accent-primary"
                           />
                         </div>
                       )}
@@ -162,19 +153,15 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
                         animate={{
                           color:
                             isCurrent || isCompleted
-                              ? 'rgb(255, 255, 255)'
-                              : 'rgb(156, 163, 175)',
+                              ? 'var(--foreground)'
+                              : 'var(--muted-foreground)',
                         }}
                         transition={{ duration: 0.3 }}
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore
                         className="font-medium"
                       >
                         {step.title}
                       </motion.h3>
-                      <p className="text-sm text-gray-500">
-                        {step.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground">{step.description}</p>
                     </div>
                   </div>
                 </div>
@@ -182,10 +169,9 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
             })}
           </div>
         </div>
-        <Separator
-          orientation="vertical"
-          className="data-[orientation=vertical]:h-1/2"
-        />
+
+        <Separator orientation="vertical" className="hidden md:block" />
+
         <div className="w-full md:w-2/3">
           <AnimatePresence mode="wait">
             <motion.div
@@ -194,22 +180,24 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -20, opacity: 0 }}
               transition={{ duration: 0.3 }}
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
               className="p-6"
             >
-              <div className="mb-6">
-                <h2 className="text-xl font-semibold">{currentStep.title}</h2>
-                <p className="text-gray-400">{currentStep.description}</p>
+              <div className="mb-6 md:hidden">
+                <p className="text-xs font-medium uppercase tracking-wide text-accent-primary">
+                  Step {currentStepIndex + 1} of {steps.length}
+                </p>
               </div>
 
-              {/* Render the current step component */}
+              <div className="mb-6">
+                <h2 className="text-xl font-semibold text-foreground">{currentStep.title}</h2>
+                <p className="text-muted-foreground">{currentStep.description}</p>
+              </div>
+
               {currentStep.component}
 
-              {/* Validation error message */}
               {validationError && (
-                <div className="mt-4 p-3 bg-red-900/30 border border-red-800 rounded-md flex items-start gap-2 text-red-300">
-                  <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
                   <p>{validationError}</p>
                 </div>
               )}
@@ -217,22 +205,12 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
           </AnimatePresence>
         </div>
       </div>
-      <div className="w-full p-6 flex justify-between">
-        <Button
-          variant="outline"
-          onClick={handleBack}
-          disabled={isSubmitting}
-          className={cn(
-            'border-gray-700 text-white hover:bg-gray-800',
-            isFirstStep && 'opacity-50 cursor-not-allowed'
-          )}
-        >
+
+      <div className="flex justify-between border-t border-border bg-muted/20 p-6">
+        <Button variant="outline" onClick={handleBack} disabled={isSubmitting}>
           {isFirstStep ? 'Cancel' : 'Back'}
         </Button>
-        <Button
-          onClick={handleNext}
-          disabled={isSubmitting}
-        >
+        <Button onClick={handleNext} disabled={isSubmitting}>
           {isLastStep ? (
             isSubmitting ? (
               <>
@@ -243,9 +221,11 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
               'Complete'
             )
           ) : (
-            'Next'
+            <>
+              Next
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </>
           )}
-          {!isLastStep && <ChevronRight className="ml-1 h-4 w-4" />}
         </Button>
       </div>
     </div>

@@ -68,10 +68,10 @@ const BasicInfoStep = () => {
           name="webinarName"
           value={webinarName || ''}
           onChange={handleChange}
-          placeholder="Introduction to Mochi"
+          placeholder="Introduction to Webinar"
           className={cn(
-            '!bg-background/50 border border-input',
-            errors.webinarName && 'border-red-400 focus-visible:ring-red-400'
+            '!bg-background border border-input',
+            errors.webinarName && 'border-destructive focus-visible:ring-destructive/30'
           )}
         />
         {errors.webinarName && (
@@ -93,8 +93,8 @@ const BasicInfoStep = () => {
           onChange={handleChange}
           placeholder="Tell customers what your webinar is about"
           className={cn(
-            'min-h-[100px] !bg-background/50 border border-input',
-            errors.description && 'border-red-400 focus-visible:ring-red-400'
+            'min-h-[100px] !bg-background border border-input',
+            errors.description && 'border-destructive focus-visible:ring-destructive/30'
           )}
         />
         {errors.description && (
@@ -112,16 +112,16 @@ const BasicInfoStep = () => {
               <Button
                 variant="outline"
                 className={cn(
-                  'w-full justify-start text-left font-normal !bg-background/50 border border-input',
-                  !date && 'text-gray-500',
-                  errors.date && 'border-red-400 focus-visible:ring-red-400'
+                  'w-full justify-start border border-input bg-background text-left font-normal',
+                  !date && 'text-muted-foreground',
+                  errors.date && 'border-destructive focus-visible:ring-destructive/30'
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {date ? format(date, 'PPP') : 'Select date'}
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 !bg-background/50 border border-input">
+            <PopoverContent className="w-auto border border-border bg-popover p-0">
               <Calendar
                 mode="single"
                 selected={date}
@@ -152,8 +152,8 @@ const BasicInfoStep = () => {
                 onChange={handleChange}
                 placeholder="12:00"
                 className={cn(
-                  'pl-9 !bg-background/50 border border-input',
-                  errors.time && 'border-red-400 focus-visible:ring-red-400'
+                  'pl-9 border border-input bg-background',
+                  errors.time && 'border-destructive focus-visible:ring-destructive/30'
                 )}
               />
             </div>
@@ -161,10 +161,10 @@ const BasicInfoStep = () => {
               value={timeFormat || 'AM'}
               onValueChange={handleTimeFormatChange}
             >
-              <SelectTrigger className="w-20 !bg-background/50 border border-input">
+              <SelectTrigger className="w-20 border border-input bg-background">
                 <SelectValue placeholder="AM" />
               </SelectTrigger>
-              <SelectContent className="!bg-background border border-input">
+              <SelectContent className="border border-border bg-popover">
                 <SelectItem value="AM">AM</SelectItem>
                 <SelectItem value="PM">PM</SelectItem>
               </SelectContent>
@@ -174,14 +174,14 @@ const BasicInfoStep = () => {
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-sm text-gray-400 mt-4">
+      <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
         <div className="flex items-center">
           <Upload className="h-4 w-4 mr-2" />
           Uploading a video makes this webinar pre-recorded.
         </div>
         <Button
           variant="outline"
-          className="ml-auto relative border border-input hover:bg-background"
+          className="ml-auto border border-input bg-background hover:bg-secondary"
         >
           Upload File
           <Input

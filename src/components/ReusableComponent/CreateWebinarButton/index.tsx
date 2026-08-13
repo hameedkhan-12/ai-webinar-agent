@@ -72,16 +72,16 @@ const CreateWebinarButton = ({ assistants }: Props) => {
     >
       <DialogTrigger asChild>
         <button
-          className="rounded-xl flex gap-2 items-center hover:cursor-pointer px-4 py-2 border border-border bg-primary/10 backdrop-blur-sm text-sm font-normal text-primary hover:bg-primary-20"
+          className="rounded-xl flex gap-2 items-center hover:cursor-pointer px-4 py-2 border border-border bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
           onClick={() => setModalOpen(true)}
         >
           <PlusIcon />
           Create Webinar
         </button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[900px] p-0 bg-transparent border-none">
+      <DialogContent className="overflow-hidden border border-border bg-card p-0 shadow-2xl sm:max-w-[900px]">
         {isComplete ? (
-          <div className="bg-muted text-primary rounded-lg overflow-hidden">
+          <div className="bg-card text-foreground">
             <DialogTitle className="sr-only">Webinar Created</DialogTitle>
             <SuccessStep
               webinarLink={webinarLink}

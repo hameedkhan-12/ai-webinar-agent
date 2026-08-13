@@ -68,8 +68,8 @@ const CTAStep = ({ assistants }: Props) => {
           onChange={handleChange}
           placeholder="Let's Get Started"
           className={cn(
-            '!bg-background/50 border border-input',
-            errors.ctaLabel && 'border-red-400 focus-visible:ring-red-400'
+            'border border-input bg-background',
+            errors.ctaLabel && 'border-destructive focus-visible:ring-destructive/30'
           )}
         />
         {errors.ctaLabel && (
@@ -85,7 +85,7 @@ const CTAStep = ({ assistants }: Props) => {
           onChange={(e) => setTagInput(e.target.value)}
           onKeyDown={handleAddTag}
           placeholder="Add tags and press Enter"
-          className="!bg-background/50 border border-input"
+          className="border border-input bg-background"
         />
 
         {tags && tags.length > 0 && (
@@ -93,12 +93,12 @@ const CTAStep = ({ assistants }: Props) => {
             {tags.map((tag: string, index: number) => (
               <div
                 key={index}
-                className="flex items-center gap-1 bg-gray-800 text-white px-3 py-1 rounded-md"
+                className="flex items-center gap-1 rounded-md border border-border bg-secondary px-3 py-1 text-secondary-foreground"
               >
                 {tag}
                 <button
                   onClick={() => removeTag(tag)}
-                  className="text-gray-400 hover:text-white"
+                  className="text-muted-foreground hover:text-foreground"
                 >
                   <X className="h-3 w-3" />
                 </button>
@@ -114,17 +114,17 @@ const CTAStep = ({ assistants }: Props) => {
           defaultValue={CtaTypeEnum.BOOK_A_CALL}
           className="w-full"
         >
-          <TabsList className="w-full bg-transparent">
+          <TabsList className="w-full border border-border bg-muted/50 p-1">
             <TabsTrigger
               value={CtaTypeEnum.BOOK_A_CALL}
-              className="w-1/2 data-[state=active]:!bg-background/50"
+              className="w-1/2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               onClick={() => handleSelectCTAType(CtaTypeEnum.BOOK_A_CALL)}
             >
               Book a Call
             </TabsTrigger>
             <TabsTrigger
               value={CtaTypeEnum.BUY_NOW}
-              className="w-1/2"
+              className="w-1/2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               onClick={() => handleSelectCTAType(CtaTypeEnum.BUY_NOW)}
             >
               Buy Now
@@ -138,7 +138,7 @@ const CTAStep = ({ assistants }: Props) => {
           <div className="relative">
             <div className="mb-2">
               <div className="relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-500" />
+                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search agents"
                   className="pl-9 !bg-background/50 border border-input"
@@ -149,17 +149,17 @@ const CTAStep = ({ assistants }: Props) => {
               value={aiAgent}
               onValueChange={handleSelectAgent}
             >
-              <SelectTrigger className="w-full !bg-background/50 border border-input">
+              <SelectTrigger className="w-full border border-input bg-background">
                 <SelectValue placeholder="Select an Agent" />
               </SelectTrigger>
 
-              <SelectContent className="bg-background border border-input max-h-48">
+              <SelectContent className="max-h-48 border border-border bg-popover">
                 {assistants?.length > 0 ? (
                   assistants.map((assistant) => (
                     <SelectItem
                       key={assistant.id}
                       value={assistant.id}
-                      className="!bg-background/50 hover:!bg-white/10"
+                      className="hover:bg-secondary focus:bg-secondary"
                     >
                       {assistant.name}
                     </SelectItem>
@@ -188,7 +188,7 @@ const CTAStep = ({ assistants }: Props) => {
             value={price ?? ''}
             onChange={handlePriceChange}
             placeholder="49.00"
-            className="!bg-background/50 border border-input"
+            className="border border-input bg-background"
           />
           <p className="text-xs text-muted-foreground">
             Attendees pay this amount directly to your connected Whop

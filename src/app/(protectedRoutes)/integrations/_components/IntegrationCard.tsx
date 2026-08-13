@@ -2,95 +2,77 @@
 
 import { IntegrationMeta } from '@/lib/integrations/types'
 import { IntegrationIcon } from './IntegrationIcon'
-import { CheckCircle2, ChevronRight, Zap } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { ArrowLeftRight, ExternalLink } from 'lucide-react'
 
 type Props = {
   integration: IntegrationMeta
   isConnected: boolean
   isEnabled: boolean
   onConfigure: () => void
+  onToggle?: (enabled: boolean) => void
+  isToggling?: boolean
 }
 
-export function IntegrationCard({ integration, isConnected, isEnabled, onConfigure }: Props) {
+export function IntegrationCard({
+  integration,
+  isConnected,
+  isEnabled,
+  onConfigure,
+  onToggle,
+  isToggling = false,
+}: Props) {
   return (
-    <div
-      className={`group relative rounded-2xl border bg-card/50 backdrop-blur-xl overflow-hidden cursor-pointer transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl ${isConnected
-        ? 'border-emerald-500/30 shadow-sm shadow-emerald-500/10'
-        : 'border-border hover:border-border/80'
-        }`}
-      onClick={onConfigure}
-      style={{
-        boxShadow: isConnected ? `0 0 20px ${integration.color}12` : undefined,
-      }}
-    >
-      {/* Brand color top accent bar */}
-      <div
-        className="absolute top-0 left-0 right-0 h-0.5 transition-all duration-300 group-hover:h-1"
-        style={{ backgroundColor: integration.color }}
-      />
-
-      {/* Connected badge */}
-      {isConnected && (
-        <div className="absolute top-3 right-3 flex items-center gap-1 bg-emerald-500/15 border border-emerald-500/30 rounded-full px-2 py-0.5">
-          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" />
-          <span className="text-[10px] font-medium text-emerald-400">Connected</span>
-        </div>
-      )}
-
-      <div className="p-5">
-        {/* Icon + Name */}
-        <div className="flex items-center gap-3 mb-4">
+    <div className="flex flex-col rounded-xl border border-border/80 bg-card overflow-hidden transition-shadow duration-200 hover:shadow-md hover:border-border">
+      {/* Main content */}
+      <div className="flex flex-1 flex-col p-5 pb-4">
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div
-            className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
             style={{
-              backgroundColor: `${integration.color}18`,
-              border: `1.5px solid ${integration.color}35`,
+              backgroundColor: `${integration.color}14`,
+              border: `1px solid ${integration.color}28`,
             }}
           >
-            <IntegrationIcon id={integration.iconUrl} color={integration.color} size={24} />
+            <IntegrationIcon id={integration.iconUrl} color={integration.color} size={22} />
           </div>
-          <div className="min-w-0">
-            <h3 className="font-semibold text-foreground text-sm truncate">{integration.name}</h3>
-            <span
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
-              style={{ backgroundColor: `${integration.color}18`, color: integration.color }}
-            >
-              {integration.category}
-            </span>
-          </div>
+
+          <button
+            type="button"
+            onClick={onConfigure}
+            className="rounded-lg p-1.5 text-muted-foreground/70 transition-colors hover:bg-secondary hover:text-foreground"
+            aria-label={`Open ${integration.name} settings`}
+          >
+            <ExternalLink className="h-4 w-4" />
+          </button>
         </div>
 
-        {/* Description */}
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 mb-4">
+        <h3 className="text-[15px] font-semibold text-foreground tracking-tight">
+          {integration.name}
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground line-clamp-3">
           {integration.description}
         </p>
+      </div>
 
-        {/* Feature list */}
-        <ul className="space-y-1 mb-5">
-          {integration.features.slice(0, 3).map((feature) => (
-            <li key={feature} className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Zap className="w-2.5 h-2.5 flex-shrink-0" style={{ color: integration.color }} />
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-
-        {/* CTA */}
+      {/* Footer */}
+      <div className="flex items-center justify-between gap-3 border-t border-border/70 px-5 py-3.5">
         <button
-          className="w-full flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-semibold transition-all duration-200"
-          style={{
-            backgroundColor: isConnected ? `${integration.color}15` : `${integration.color}20`,
-            color: integration.color,
-            border: `1px solid ${integration.color}35`,
-          }}
-          onClick={(e) => {
-            e.stopPropagation()
-            onConfigure()
-          }}
+          type="button"
+          onClick={onConfigure}
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary/80"
         >
+          <ArrowLeftRight className="h-4 w-4 text-muted-foreground" />
           {isConnected ? 'Configure' : 'Connect'}
-          <ChevronRight className="w-3.5 h-3.5" />
         </button>
+
+        <Switch
+          checked={isConnected && isEnabled}
+          disabled={!isConnected || isToggling}
+          onCheckedChange={(checked) => onToggle?.(checked)}
+          className="h-6 w-11 shrink-0 p-0.5 data-[state=checked]:bg-accent-primary data-[state=unchecked]:bg-muted [&_[data-slot=switch-thumb]]:size-5 [&_[data-slot=switch-thumb]]:data-[state=unchecked]:!translate-x-0 [&_[data-slot=switch-thumb]]:data-[state=checked]:!translate-x-5"
+          aria-label={`Toggle ${integration.name}`}
+        />
       </div>
     </div>
   )

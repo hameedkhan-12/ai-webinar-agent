@@ -37,7 +37,7 @@ const AdditionalInfoStep = () => {
           >
             Lock Chat
           </Label>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Turn it on to make chat visible to your users at all time
           </p>
         </div>
@@ -57,7 +57,7 @@ const AdditionalInfoStep = () => {
             >
               Coupon Code
             </Label>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-muted-foreground">
               Turn it on to offer discounts to your viewers
             </p>
           </div>
@@ -75,14 +75,14 @@ const AdditionalInfoStep = () => {
               onChange={handleCouponCodeChange}
               placeholder="Paste the code here"
               className={cn(
-                '!bg-background/50 border border-input',
-                errors.couponCode && 'border-red-400 focus-visible:ring-red-400'
+                'border border-input bg-background',
+                errors.couponCode && 'border-destructive focus-visible:ring-destructive/30'
               )}
             />
             {errors.couponCode && (
               <p className="text-sm text-red-400">{errors.couponCode}</p>
             )}
-            <div className="flex items-start gap-2 text-sm text-gray-400 mt-2">
+            <div className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
               <Info className="h-4 w-4 mt-0.5" />
               <p>
                 This coupon code can be used to promote a sale. Users can use it

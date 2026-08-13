@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   Table,
   TableBody,
@@ -12,30 +12,87 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import { Search, UserCheck, Video, Calendar, Filter } from 'lucide-react'
 import { LeadRecord } from '@/actions/attendance'
 import Link from 'next/link'
+import { cn } from '@/lib/utils'
+
+const PAGE_SIZE = 20
 
 type Props = {
   leads: LeadRecord[]
 }
 
+function getPageNumbers(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1)
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, 'ellipsis', totalPages]
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages]
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages]
+}
+
 export default function LeadsClientTable({ leads }: Props) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'COMPLETED' | 'InProgress' | 'PENDING'>('ALL')
+  const [currentPage, setCurrentPage] = useState(1)
 
-  const filteredLeads = leads.filter((lead) => {
-    const matchesSearch =
-      lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.webinarTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead.webinarTags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredLeads = useMemo(
+    () =>
+      leads.filter((lead) => {
+        const matchesSearch =
+          lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          lead.webinarTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          lead.webinarTags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
 
-    const matchesStatus =
-      statusFilter === 'ALL' || lead.callStatus === statusFilter
+        const matchesStatus = statusFilter === 'ALL' || lead.callStatus === statusFilter
 
-    return matchesSearch && matchesStatus
-  })
+        return matchesSearch && matchesStatus
+      }),
+    [leads, searchTerm, statusFilter]
+  )
+
+  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / PAGE_SIZE))
+  const safePage = Math.min(currentPage, totalPages)
+
+  const paginatedLeads = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE
+    return filteredLeads.slice(start, start + PAGE_SIZE)
+  }, [filteredLeads, safePage])
+
+  const rangeStart = filteredLeads.length === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1
+  const rangeEnd = Math.min(safePage * PAGE_SIZE, filteredLeads.length)
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, statusFilter])
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, totalPages])
+
+  const goToPage = (page: number) => {
+    setCurrentPage(Math.min(Math.max(page, 1), totalPages))
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -133,8 +190,8 @@ export default function LeadsClientTable({ leads }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredLeads.length > 0 ? (
-              filteredLeads.map((lead) => (
+            {paginatedLeads.length > 0 ? (
+              paginatedLeads.map((lead) => (
                 <TableRow
                   key={lead.id}
                   className="border-border/40 hover:bg-accent-primary/5 transition-colors group"
@@ -220,6 +277,66 @@ export default function LeadsClientTable({ leads }: Props) {
             )}
           </TableBody>
         </Table>
+
+        {filteredLeads.length > 0 && (
+          <div className="flex flex-col gap-4 border-t border-border/60 bg-secondary/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">
+              Showing{' '}
+              <span className="font-medium text-foreground">
+                {rangeStart}–{rangeEnd}
+              </span>{' '}
+              of{' '}
+              <span className="font-medium text-foreground">{filteredLeads.length}</span> leads
+            </p>
+
+            <Pagination className="mx-0 w-auto justify-end">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      goToPage(safePage - 1)
+                    }}
+                    className={cn(safePage <= 1 && 'pointer-events-none opacity-50')}
+                  />
+                </PaginationItem>
+
+                {getPageNumbers(safePage, totalPages).map((page, index) =>
+                  page === 'ellipsis' ? (
+                    <PaginationItem key={`ellipsis-${index}`}>
+                      <PaginationEllipsis />
+                    </PaginationItem>
+                  ) : (
+                    <PaginationItem key={page}>
+                      <PaginationLink
+                        href="#"
+                        isActive={page === safePage}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          goToPage(page)
+                        }}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  )
+                )}
+
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      goToPage(safePage + 1)
+                    }}
+                    className={cn(safePage >= totalPages && 'pointer-events-none opacity-50')}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   )
