@@ -24,9 +24,9 @@ export const onGetPlatformSubscriptionCheckoutUrl = async (
       companyId: process.env.WHOP_COMPANY_ID!,
       price: PLATFORM_SUBSCRIPTION_PRICE_USD,
       planType: 'renewal',
-      productTitle: 'Spotlight Platform Subscription',
+      productTitle: 'Voxinar Platform Subscription',
       productDescription: 'Monthly access to host live webinars with AI agents.',
-      productExternalId: 'spotlight-platform-subscription',
+      productExternalId: 'voxinar-platform-subscription',
       metadata: {
         userId,
         email,
@@ -59,7 +59,7 @@ export const onGetCustomVoiceAddonCheckoutUrl = async (
       productTitle: 'Custom Voice Cloning Add-on',
       productDescription:
         'Lets your AI agents speak in a cloned human voice instead of the stock voice.',
-      productExternalId: 'spotlight-custom-voice-addon',
+      productExternalId: 'voxinar-custom-voice-addon',
       metadata: {
         userId,
         email,

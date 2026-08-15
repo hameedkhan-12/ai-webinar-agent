@@ -8,7 +8,7 @@ import CtaSection from '@/components/marketing/CtaSection'
 import MarketingFooter from '@/components/marketing/MarketingFooter'
 
 export const metadata: Metadata = {
-  title: 'Spotlight - Webinars that book calls automatically',
+  title: 'Voxinar - Webinars that book calls automatically',
   description:
     'Host live webinars and hand off every "Book a Call" click to a context-aware AI voice agent - no human required.',
 }

@@ -4,19 +4,10 @@ import React from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { MoreHorizontal, Users, ArrowUpRight } from 'lucide-react'
-
-type AttendanceItem = {
-  id: string
-  attendeeId: string
-  name: string
-  email: string
-  createdAt: Date
-  webinarTitle: string
-  tags: string[]
-}
+import type { DashboardMetricsData } from '@/actions/attendance'
 
 type Props = {
-  recentAttendances: AttendanceItem[]
+  recentAttendances: DashboardMetricsData['recentAttendances']
 }
 
 export function RecentLeadsWidget({ recentAttendances }: Props) {

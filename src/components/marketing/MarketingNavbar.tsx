@@ -24,7 +24,7 @@ const MarketingNavbar = () => {
           className="flex items-center gap-2 font-semibold tracking-tight"
         >
           <Spotlight />
-          <span className="text-lg">Spotlight</span>
+          <span className="text-lg">Voxinar</span>
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex">

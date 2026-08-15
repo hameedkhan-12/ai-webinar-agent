@@ -1,18 +1,16 @@
 import type { Metadata } from 'next'
 import { ThemeProvider } from '@/providers/theme-provider'
 import { ClerkProvider } from '@clerk/nextjs'
-import { Plus_Jakarta_Sans } from 'next/font/google'
+import '@fontsource/plus-jakarta-sans/400.css'
+import '@fontsource/plus-jakarta-sans/500.css'
+import '@fontsource/plus-jakarta-sans/600.css'
+import '@fontsource/plus-jakarta-sans/700.css'
+import '@fontsource/plus-jakarta-sans/800.css'
 import './globals.css'
 import { Toaster } from 'sonner'
 
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-  variable: '--font-plus-jakarta',
-})
-
 export const metadata: Metadata = {
-  title: 'Spotlight | AI Webinar Platform',
+  title: 'Voxinar | AI-powered webinars that talk back',
   description: 'Automated AI webinar lead generation and live sales closing platform',
 }
 
@@ -28,7 +26,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <body
-          className={`${plusJakartaSans.variable} font-sans antialiased`}
+          className="font-sans antialiased"
           suppressHydrationWarning
         >
           <ThemeProvider

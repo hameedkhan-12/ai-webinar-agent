@@ -68,7 +68,7 @@ const BasicInfoStep = () => {
           name="webinarName"
           value={webinarName || ''}
           onChange={handleChange}
-          placeholder="Introduction to Webinar"
+          placeholder="Introduction to Webinar Platform"
           className={cn(
             '!bg-background border border-input',
             errors.webinarName && 'border-destructive focus-visible:ring-destructive/30'

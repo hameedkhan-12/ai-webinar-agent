@@ -2,7 +2,6 @@
 
 import { onAuthenticateUser } from './auth'
 import { prisma } from '@/lib/prismaClient'
-import Stripe from 'stripe'
 
 export const activateSubscription = async () => {
   const currentUser = await onAuthenticateUser()

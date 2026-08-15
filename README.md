@@ -30,6 +30,8 @@ pnpm worker
 
 Run this alongside `pnpm dev` whenever testing Vapi end-of-call webhooks.
 
+The post-call pipeline's follow-up step sends a personalized email via [Resend](https://resend.com). Set `RESEND_API_KEY` (and optionally `FOLLOW_UP_FROM_ADDRESS`, defaults to Resend's shared test sender) in `.env`. Email copy is generated with the same `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` used for objection classification; if neither is set, a template-based fallback email is sent instead so the pipeline never blocks on AI availability.
+
 ## Getting Started
 
 First, run the development server:

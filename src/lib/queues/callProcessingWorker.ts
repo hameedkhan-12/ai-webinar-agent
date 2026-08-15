@@ -3,6 +3,7 @@ import { classifyTranscript } from '@/actions/objections'
 import { CallTranscriptProcessingStatusEnum } from '@/generated/prisma/enums'
 import { prisma } from '@/lib/prismaClient'
 import { createBullMQConnection } from '@/lib/redis'
+import { sendPersonalizedFollowUpEmail } from '@/lib/email/followUpEmail'
 import type { CallProcessingJobData } from '@/lib/queues/callProcessingQueue'
 
 const QUEUE_NAME = 'call-processing'
@@ -11,9 +12,27 @@ async function sendPersonalizedFollowUp(
   attendanceId: string,
   transcriptId: string
 ): Promise<void> {
-  // TODO: generate personalized follow-up content and send via email provider
-  console.log(
-    `[call-processing] TODO: send personalized follow-up email for attendance ${attendanceId}, transcript ${transcriptId}`
+  const result = await sendPersonalizedFollowUpEmail(attendanceId, transcriptId)
+
+  if (result.sent) {
+    console.log(
+      `[call-processing] Follow-up email sent for attendance ${attendanceId}, transcript ${transcriptId}`
+    )
+    return
+  }
+
+  if (result.reason === 'no_email') {
+    // Nothing to retry - this attendee record has no email on file.
+    console.warn(
+      `[call-processing] Skipping follow-up email for attendance ${attendanceId}: no email on file`
+    )
+    return
+  }
+
+  // 'send_failed' (provider error, network blip, etc.) is transient - let
+  // BullMQ retry the job rather than silently swallowing a real send failure.
+  throw new Error(
+    `Follow-up email send failed for attendance ${attendanceId}, transcript ${transcriptId}: ${result.detail ?? 'unknown error'}`
   )
 }
 

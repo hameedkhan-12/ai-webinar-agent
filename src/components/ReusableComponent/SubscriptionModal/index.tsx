@@ -60,7 +60,7 @@ const SubscriptionModal = ({ user }: Props) => {
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Spotlight Subscription</DialogTitle>
+          <DialogTitle>Voxinar Subscription</DialogTitle>
           <p className="text-sm text-muted-foreground mt-1">
             You&apos;ll be redirected to Whop to complete your subscription.
           </p>

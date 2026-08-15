@@ -20,7 +20,7 @@ const Sidebar = () => {
   const { user } = useUser()
 
   const userEmail =
-    user?.primaryEmailAddress?.emailAddress || user?.fullName || 'Spotlight Workspace'
+    user?.primaryEmailAddress?.emailAddress || user?.fullName || 'Voxinar Workspace'
 
   return (
     <aside className="w-18 md:w-60 lg:w-64 h-screen sticky top-0 py-6 px-3 border-r bg-card/90 border-border/50 flex flex-col justify-between shrink-0 select-none transition-all">
@@ -33,7 +33,7 @@ const Sidebar = () => {
           </div>
           <div className="hidden md:flex flex-col min-w-0">
             <span className="font-bold text-sm text-foreground tracking-tight truncate">
-              Spotlight
+              Voxinar
             </span>
             <span className="text-[11px] text-muted-foreground font-medium truncate">
               AI Webinar Platform

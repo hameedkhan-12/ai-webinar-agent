@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { ArrowRight, PhoneCall, Sparkles } from 'lucide-react'
 import { SignedIn, SignedOut } from '@clerk/nextjs'
@@ -98,6 +99,25 @@ const Hero = () => {
 
         <motion.div
           custom={4}
+          initial="hidden"
+          animate="visible"
+          variants={fadeUp}
+          className="mt-16 w-full max-w-5xl"
+        >
+          <div className="overflow-hidden rounded-2xl border border-accent-primary/30 bg-card shadow-2xl shadow-black/20">
+            <Image
+              src="/dashboard-preview.png"
+              alt="Voxinar dashboard preview"
+              width={1024}
+              height={475}
+              className="w-full h-auto"
+              priority
+            />
+          </div>
+        </motion.div>
+
+        <motion.div
+          custom={5}
           initial="hidden"
           animate="visible"
           variants={fadeUp}

@@ -1,13 +1,12 @@
 import { CallStatusEnum } from '@/generated/prisma/enums'
-import HomeIcon from '@/icons/HomeIcon'
 import LeadIcon from '@/icons/LeadIcon'
 import SettingsIcon from '@/icons/SettingsIcon'
-import { Plug2, Sparkle, Webcam } from 'lucide-react'
+import { LayoutDashboard, Plug2, Sparkle, Webcam } from 'lucide-react'
 export const sidebarData = [
   {
     id: 1,
-    title: 'Home',
-    icon: HomeIcon,
+    title: 'Dashboard',
+    icon: LayoutDashboard,
     link: '/home',
   },
   {

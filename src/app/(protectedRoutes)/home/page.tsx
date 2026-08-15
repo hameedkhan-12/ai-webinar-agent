@@ -46,7 +46,7 @@ export default async function HomePage() {
       <div className="w-full flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8 bg-gradient-to-r from-card/80 via-card/50 to-accent-primary/10 p-6 md:p-8 rounded-2xl border border-border/60 backdrop-blur-xl relative overflow-hidden shadow-xl">
         <div className="space-y-4 max-w-2xl z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-primary/10 border border-accent-primary/20 text-accent-primary text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" /> Spotlight AI Dashboard
+            <Sparkles className="w-3.5 h-3.5" /> Voxinar AI Dashboard
           </div>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-foreground">
             Welcome back, <span className="text-accent-primary">{checkUser.user.name}</span>
