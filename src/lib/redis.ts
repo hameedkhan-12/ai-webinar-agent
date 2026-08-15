@@ -1,50 +1,72 @@
 import Redis from 'ioredis'
 
-const globalForRedis = globalThis as unknown as { redis: Redis }
+const globalForRedis = globalThis as unknown as { redis: Redis | undefined }
 
-function createRedisClient(): Redis {
-  const redisUrl = process.env.REDIS_URL
+function getRedisUrl(): string | undefined {
+  return process.env.REDIS_URL?.trim()
+}
 
-  if (!redisUrl) {
-    throw new Error(
-      'REDIS_URL environment variable is required. Redis is a mandatory dependency.'
-    )
+function isValidRedisUrl(url: string | undefined): url is string {
+  if (!url) {
+    return false
+  }
+
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'redis:' || parsed.protocol === 'rediss:'
+  } catch {
+    return false
+  }
+}
+
+function createRedisClient(options: { maxRetriesPerRequest: number | null }): Redis {
+  const redisUrl = getRedisUrl()
+
+  if (!isValidRedisUrl(redisUrl)) {
+    throw new Error('REDIS_URL is invalid or not configured')
   }
 
   return new Redis(redisUrl, {
-    maxRetriesPerRequest: 3,
+    maxRetriesPerRequest: options.maxRetriesPerRequest,
     enableReadyCheck: true,
-    lazyConnect: false,
+    lazyConnect: true,
   })
 }
 
-export const redis = globalForRedis.redis ?? (globalForRedis.redis = createRedisClient())
+function getRedisClient(): Redis {
+  if (!globalForRedis.redis) {
+    globalForRedis.redis = createRedisClient({ maxRetriesPerRequest: 3 })
+  }
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForRedis.redis = redis
+  return globalForRedis.redis
 }
+
+export const redis = new Proxy({} as Redis, {
+  get(_target, prop) {
+    const client = getRedisClient()
+    const value = client[prop as keyof Redis]
+
+    return typeof value === 'function' ? value.bind(client) : value
+  },
+})
 
 /**
  * BullMQ requires a dedicated connection with maxRetriesPerRequest: null.
  * Use this factory for queue/worker setup — do not pass the general `redis` instance.
  */
 export function createBullMQConnection(): Redis {
-  const redisUrl = process.env.REDIS_URL
+  return createRedisClient({ maxRetriesPerRequest: null })
+}
 
-  if (!redisUrl) {
-    throw new Error(
-      'REDIS_URL environment variable is required. Redis is a mandatory dependency.'
-    )
-  }
-
-  return new Redis(redisUrl, {
-    maxRetriesPerRequest: null,
-    enableReadyCheck: true,
-    lazyConnect: false,
-  })
+export function isRedisConfigured(): boolean {
+  return isValidRedisUrl(getRedisUrl())
 }
 
 export async function checkRedisConnection(): Promise<void> {
+  if (!isRedisConfigured()) {
+    throw new Error('REDIS_URL is invalid or not configured')
+  }
+
   const pong = await redis.ping()
 
   if (pong !== 'PONG') {

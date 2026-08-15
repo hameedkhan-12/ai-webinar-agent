@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prismaClient'
-import { checkRedisConnection } from '@/lib/redis'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const checks: Record<string, 'ok' | 'error'> = {}
@@ -12,11 +13,21 @@ export async function GET() {
     checks.database = 'error'
   }
 
-  try {
-    await checkRedisConnection()
-    checks.redis = 'ok'
-  } catch {
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
     checks.redis = 'error'
+  } else {
+    try {
+      const { checkRedisConnection, isRedisConfigured } = await import('@/lib/redis')
+
+      if (!isRedisConfigured()) {
+        checks.redis = 'error'
+      } else {
+        await checkRedisConnection()
+        checks.redis = 'ok'
+      }
+    } catch {
+      checks.redis = 'error'
+    }
   }
 
   const healthy = Object.values(checks).every((status) => status === 'ok')
