@@ -1,4 +1,5 @@
 import Whop from '@whop/sdk'
+
 const isSandbox = process.env.WHOP_ENV === 'sandbox'
 
 const getAppUrl = () => (process.env.APP_URL ?? '').replace(/\/+$/, '')
@@ -76,12 +77,14 @@ export async function createCheckout({
     },
     metadata,
   })
+  
+  const purchaseUrl = checkout.purchase_url
 
   return {
     planId: checkout.plan?.id,
-    checkoutUrl: isSandbox
-      ? `https://sandbox.whop.com/checkout/${checkout.plan?.id}`
-      : `https://whop.com/checkout/${checkout.plan?.id}`,
+    checkoutUrl: purchaseUrl?.startsWith('http')
+      ? purchaseUrl
+      : `${isSandbox ? 'https://sandbox.whop.com' : 'https://whop.com'}${purchaseUrl}`,
   }
 }
 
