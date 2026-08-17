@@ -7,6 +7,11 @@ import Whop from '@whop/sdk'
 // real payments.
 const isSandbox = process.env.WHOP_ENV === 'sandbox'
 
+// Strip any trailing slash so we never build a double-slash URL below.
+// Mirrors the same helper in src/actions/vapi.ts - keep both in sync if
+// this ever needs to change.
+const getAppUrl = () => (process.env.APP_URL ?? '').replace(/\/+$/, '')
+
 export const whop = new Whop({
   apiKey: process.env.WHOP_API_KEY,
   // NOTE: must be `baseURL` (capital URL) — `baseUrl` is silently ignored
@@ -36,6 +41,11 @@ type CreateCheckoutParams = {
   productDescription?: string
   productExternalId?: string
   applicationFeeAmount?: number
+  // Where Whop sends the browser back to after checkout completes (or is
+  // canceled). Whop appends its own ?status=success|error query param on
+  // top of whatever path is given here. Defaults to /checkout/complete if
+  // omitted - always pass an absolute path starting with "/".
+  redirectPath?: string
 }
 
 export async function createCheckout({
@@ -49,6 +59,7 @@ export async function createCheckout({
   productDescription,
   productExternalId,
   applicationFeeAmount,
+  redirectPath = '/checkout/complete',
 }: CreateCheckoutParams) {
   if (planType === 'renewal' && (!productTitle || !productExternalId)) {
     throw new Error(
@@ -59,6 +70,10 @@ export async function createCheckout({
   const checkout = await whop.checkoutConfigurations.create({
     currency,
     account_id: companyId,
+    // Without this, Whop falls back to its own default post-checkout
+    // destination (the company's Whop community page) instead of
+    // returning the user to this app.
+    redirect_url: `${getAppUrl()}${redirectPath}`,
     plan: {
       initial_price: price,
       plan_type: planType,

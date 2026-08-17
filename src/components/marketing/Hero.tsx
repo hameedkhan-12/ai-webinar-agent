@@ -106,7 +106,7 @@ const Hero = () => {
         >
           <div className="overflow-hidden rounded-2xl border border-accent-primary/30 bg-card shadow-2xl shadow-black/20">
             <Image
-              src="/dashboard-preview.png"
+              src="/preview.png"
               alt="Voxinar dashboard preview"
               width={1024}
               height={475}
