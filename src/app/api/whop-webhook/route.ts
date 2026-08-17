@@ -11,11 +11,18 @@ export async function POST(req: NextRequest) {
   try {
     const event = await verifyWebhook(body, req.headers)
 
-    const isActivateEvent = ACTIVATE_EVENTS.has(event.type)
-    const isDeactivateEvent = DEACTIVATE_EVENTS.has(event.type)
+    const eventType =
+      (event as unknown as { type?: string; action?: string }).type ??
+      (event as unknown as { type?: string; action?: string }).action ??
+      'unknown'
+
+    console.log('[whop-webhook] full event:', JSON.stringify(event))
+
+    const isActivateEvent = ACTIVATE_EVENTS.has(eventType)
+    const isDeactivateEvent = DEACTIVATE_EVENTS.has(eventType)
 
     if (!isActivateEvent && !isDeactivateEvent) {
-      console.log('👉🏻 Unhandled irrelevant Whop event:', event.type)
+      console.log('👉🏻 Unhandled irrelevant Whop event:', eventType)
       return NextResponse.json({ received: true }, { status: 200 })
     }
 
@@ -26,9 +33,12 @@ export async function POST(req: NextRequest) {
         : {}
     ) as Record<string, string>
 
+    // TEMP DEBUG: confirm metadata actually arrived and has what we expect.
+    console.log('[whop-webhook] resolved metadata:', metadata)
+
     await handleMembershipStatusChange(metadata, isActivateEvent)
 
-    console.log('WHOP EVENT 💳', event.type, metadata.kind)
+    console.log('WHOP EVENT 💳', eventType, metadata.kind)
     return NextResponse.json({ received: true }, { status: 200 })
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
