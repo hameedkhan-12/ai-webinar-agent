@@ -1,8 +1,27 @@
 import Whop from '@whop/sdk'
 
+// WHOP_ENV switches the whole app between sandbox and production.
+// Set WHOP_ENV=sandbox (with a sandbox WHOP_API_KEY) on demo/preview
+// deployments only — never on the live production deployment, or real
+// checkouts will silently start hitting Whop's sandbox instead of taking
+// real payments.
+const isSandbox = process.env.WHOP_ENV === 'sandbox'
+
 export const whop = new Whop({
   apiKey: process.env.WHOP_API_KEY,
+  // NOTE: must be `baseURL` (capital URL) — `baseUrl` is silently ignored
+  // by the SDK and it will fall back to production, causing a sandbox key
+  // to fail with 401s. The /api/v1 suffix is required too.
+  baseURL: isSandbox
+    ? 'https://sandbox-api.whop.com/api/v1'
+    : undefined,
 })
+
+// Use this on the client (or wherever the checkout link/embed is rendered)
+// to know which Whop environment the current deployment is pointed at.
+export const WHOP_CHECKOUT_ENV: 'sandbox' | 'production' = isSandbox
+  ? 'sandbox'
+  : 'production'
 
 export const PLATFORM_COMPANY_ID = process.env.WHOP_COMPANY_ID!
 
@@ -66,7 +85,9 @@ export async function createCheckout({
 
   return {
     planId: checkout.plan?.id,
-    checkoutUrl: `https://whop.com/checkout/${checkout.plan?.id}`,
+    checkoutUrl: isSandbox
+      ? `https://sandbox.whop.com/checkout/${checkout.plan?.id}`
+      : `https://whop.com/checkout/${checkout.plan?.id}`,
   }
 }
 
