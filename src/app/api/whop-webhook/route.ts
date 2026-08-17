@@ -2,20 +2,28 @@ import { NextRequest, NextResponse } from 'next/server'
 import { verifyWebhook } from '@/lib/whop'
 import { handleMembershipStatusChange } from '@/actions/whop'
 
-const ACTIVATE_EVENTS = new Set(['membership.went_valid', 'payment.succeeded'])
-const DEACTIVATE_EVENTS = new Set(['membership.went_invalid'])
+const ACTIVATE_EVENTS = new Set([
+  'membership_went_valid',
+  'membership_activated',
+  'payment_succeeded',
+  'invoice_paid',
+])
+const DEACTIVATE_EVENTS = new Set([
+  'membership_went_invalid',
+  'membership_deactivated',
+  'membership_cancelled',
+])
 
 export async function POST(req: NextRequest) {
   const body = await req.text()
 
   try {
     const event = await verifyWebhook(body, req.headers)
-
     const eventType =
       (event as unknown as { type?: string; action?: string }).type ??
       (event as unknown as { type?: string; action?: string }).action ??
       'unknown'
-
+      
     console.log('[whop-webhook] full event:', JSON.stringify(event))
 
     const isActivateEvent = ACTIVATE_EVENTS.has(eventType)
