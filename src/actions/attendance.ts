@@ -539,13 +539,13 @@ async function computeDashboardMetrics(userId: string): Promise<DashboardMetrics
     recentAttendances: recentAttendances.map((att) => ({
       id: att.id,
       attendeeId: att.attendeeId,
-      name: att.user.name,
-      email: att.user.email,
-      webinarTitle: att.webinar.title,
-      tags: att.webinar.tags || [],
+      name: att.user?.name || 'Attendee',
+      email: att.user?.email || '',
+      webinarTitle: att.webinar?.title || 'Webinar',
+      tags: att.webinar?.tags || [],
       callStatus: att.callStatus,
       attendedType: att.attendedType,
-      createdAt: att.createdAt.toISOString(),
+      createdAt: att.createdAt ? att.createdAt.toISOString() : new Date().toISOString(),
     })),
   }
 }
