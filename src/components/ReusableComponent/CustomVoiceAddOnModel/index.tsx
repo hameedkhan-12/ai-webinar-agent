@@ -52,7 +52,8 @@ const CustomVoiceAddonModal = ({
     try {
       const result = await onGetCustomVoiceAddonCheckoutUrl(
         user.email,
-        user.id
+        user.id,
+        '/ai-agents/voices'
       )
 
       if (!result?.checkoutUrl) {

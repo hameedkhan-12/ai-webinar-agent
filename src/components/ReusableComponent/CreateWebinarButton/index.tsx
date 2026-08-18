@@ -68,12 +68,20 @@ const CreateWebinarButton = ({ assistants }: Props) => {
   return (
     <Dialog
       open={isModalOpen}
-      onOpenChange={setModalOpen}
+      onOpenChange={(open) => {
+        setModalOpen(open)
+        if (open) {
+          resetForm()
+        }
+      }}
     >
       <DialogTrigger asChild>
         <button
           className="rounded-xl flex gap-2 items-center hover:cursor-pointer px-4 py-2 border border-border bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-          onClick={() => setModalOpen(true)}
+          onClick={() => {
+            resetForm()
+            setModalOpen(true)
+          }}
         >
           <PlusIcon />
           Create Webinar

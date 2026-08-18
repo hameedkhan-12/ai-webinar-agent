@@ -33,7 +33,8 @@ const SubscriptionModal = ({ user }: Props) => {
     try {
       const result = await onGetPlatformSubscriptionCheckoutUrl(
         user.email,
-        user.id
+        user.id,
+        '/webinars'
       )
 
       if (!result?.checkoutUrl) {

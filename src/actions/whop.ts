@@ -17,9 +17,15 @@ const MARKETPLACE_APPLICATION_FEE_PERCENT = 10
 
 export const onGetPlatformSubscriptionCheckoutUrl = async (
   email: string,
-  userId: string
+  userId: string,
+  /** Where to send the user after a successful payment (e.g. '/webinars/create') */
+  next?: string
 ) => {
   try {
+    const redirectPath = next
+      ? `/checkout/complete?next=${encodeURIComponent(next)}`
+      : '/checkout/complete'
+
     const { checkoutUrl } = await createCheckout({
       companyId: process.env.WHOP_COMPANY_ID!,
       price: PLATFORM_SUBSCRIPTION_PRICE_USD,
@@ -27,6 +33,7 @@ export const onGetPlatformSubscriptionCheckoutUrl = async (
       productTitle: 'Voxinar Platform Subscription',
       productDescription: 'Monthly access to host live webinars with AI agents.',
       productExternalId: 'voxinar-platform-subscription',
+      redirectPath,
       metadata: {
         userId,
         email,
@@ -49,9 +56,15 @@ export const onGetPlatformSubscriptionCheckoutUrl = async (
 
 export const onGetCustomVoiceAddonCheckoutUrl = async (
   email: string,
-  userId: string
+  userId: string,
+  /** Where to send the user after a successful payment (e.g. '/ai-agents/voices') */
+  next?: string
 ) => {
   try {
+    const redirectPath = next
+      ? `/checkout/complete?next=${encodeURIComponent(next)}`
+      : '/checkout/complete'
+
     const { checkoutUrl } = await createCheckout({
       companyId: process.env.WHOP_COMPANY_ID!,
       price: CUSTOM_VOICE_ADDON_PRICE_USD,
@@ -60,6 +73,7 @@ export const onGetCustomVoiceAddonCheckoutUrl = async (
       productDescription:
         'Lets your AI agents speak in a cloned human voice instead of the stock voice.',
       productExternalId: 'voxinar-custom-voice-addon',
+      redirectPath,
       metadata: {
         userId,
         email,
@@ -91,24 +105,45 @@ export const handleMembershipStatusChange = async (
   isActive: boolean
 ) => {
   try {
-    if (metadata.kind === 'platform_subscription' && metadata.userId) {
+    const userId = metadata.userId
+    const email = metadata.email
+    const kind = metadata.kind ?? 'platform_subscription'
+
+    // Look up user by ID first, or by email as fallback
+    let user = null
+    if (userId) {
+      user = await prisma.user.findUnique({ where: { id: userId } })
+    }
+    if (!user && email) {
+      user = await prisma.user.findUnique({ where: { email } })
+    }
+
+    if (!user) {
+      console.error(
+        '[handleMembershipStatusChange] No user found matching metadata:',
+        metadata
+      )
+      return
+    }
+
+    if (kind === 'platform_subscription') {
       await prisma.user.update({
-        where: { id: metadata.userId },
+        where: { id: user.id },
         data: { subscription: isActive },
       })
       return
     }
 
-    if (metadata.kind === 'custom_voice_addon' && metadata.userId) {
+    if (kind === 'custom_voice_addon') {
       await prisma.user.update({
-        where: { id: metadata.userId },
+        where: { id: user.id },
         data: { customVoiceEnabled: isActive },
       })
       return
     }
 
     if (
-      metadata.kind === 'buy_now' &&
+      kind === 'buy_now' &&
       isActive &&
       metadata.attendeeId &&
       metadata.webinarId

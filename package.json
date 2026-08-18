@@ -99,6 +99,7 @@
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",
+    "pg": "^8.23.0",
     "tailwindcss": "^4",
     "tsx": "^4.23.8",
     "tw-animate-css": "^1.2.9",

@@ -1,6 +1,6 @@
 'use client'
 
-import { WebinarStatusEnum, CtaTypeEnum } from '@/generated/prisma/enums'
+import { WebinarStatusEnum } from '@/generated/prisma/enums'
 import type { WebinarListItem } from '@/lib/webinar-list'
 import { StatCard } from '@/app/(protectedRoutes)/integrations/_components/StatCard'
 import WebinarCard from './WebinarCard'
