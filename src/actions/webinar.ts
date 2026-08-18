@@ -8,12 +8,14 @@ import { revalidatePath } from 'next/cache'
 import { WebinarStatusEnum } from '@/generated/prisma/enums'
 
 function combineDateTime(
-  date: Date,
+  dateInput: Date | string,
   timeStr: string,
   timeFormat: 'AM' | 'PM'
 ): Date {
+  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput
+
   const [hoursStr, minutesStr] = timeStr.split(':')
-  let hours = Number.parseInt(hoursStr, 10)
+  let hours = Number.parseInt(hoursStr || '0', 10)
   const minutes = Number.parseInt(minutesStr || '0', 10)
 
   // Convert to 24-hour format
@@ -23,9 +25,11 @@ function combineDateTime(
     hours = 0
   }
 
-  const result = new Date(date)
-  result.setHours(hours, minutes, 0, 0)
-  return result
+  // date.getTime() represents client local midnight (or start of day).
+  // Adding (hours * 3600 + minutes * 60) * 1000 computes the exact timestamp
+  // for the user's selected time on their chosen date.
+  const timeOffsetMs = (hours * 3600 + minutes * 60) * 1000
+  return new Date(date.getTime() + timeOffsetMs)
 }
 
 export const createWebinar = async (formData: WebinarFormState) => {
@@ -39,8 +43,6 @@ export const createWebinar = async (formData: WebinarFormState) => {
       return { status: 402, message: 'Subscription required' }
     }
     const presenterId = user.user.id
-
-    console.log('Form Data:', formData, presenterId)
 
     if (!formData.basicInfo.webinarName) {
       return { status: 404, message: 'Webinar name is required' }
@@ -59,9 +61,10 @@ export const createWebinar = async (formData: WebinarFormState) => {
       formData.basicInfo.time,
       formData.basicInfo.timeFormat || 'AM'
     )
-    const now = new Date()
 
-    if (combinedDateTime < now) {
+    // Allow 15 minutes grace period for clock skew / creation delay
+    const gracePeriodMs = 15 * 60 * 1000
+    if (combinedDateTime.getTime() < Date.now() - gracePeriodMs) {
       return {
         status: 400,
         message: 'Webinar date and time cannot be in the past',

@@ -28,14 +28,18 @@ function createRedisClient(options: { maxRetriesPerRequest: number | null }): Re
 
   return new Redis(redisUrl, {
     maxRetriesPerRequest: options.maxRetriesPerRequest,
-    enableReadyCheck: true,
+    enableReadyCheck: false,
     lazyConnect: true,
+    enableOfflineQueue: true,
+    retryStrategy(times) {
+      return Math.min(times * 100, 3000)
+    },
   })
 }
 
 function getRedisClient(): Redis {
   if (!globalForRedis.redis) {
-    globalForRedis.redis = createRedisClient({ maxRetriesPerRequest: 3 })
+    globalForRedis.redis = createRedisClient({ maxRetriesPerRequest: null })
   }
 
   return globalForRedis.redis
