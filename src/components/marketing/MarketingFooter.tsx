@@ -24,7 +24,7 @@ const MarketingFooter = () => {
           </Link>
         </nav>
         <p className="text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Spotlight. All rights reserved.
+          &copy; {new Date().getFullYear()} Voxinar. All rights reserved.
         </p>
       </div>
     </footer>
