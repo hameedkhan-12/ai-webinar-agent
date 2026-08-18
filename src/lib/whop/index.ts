@@ -88,9 +88,23 @@ export async function createCheckout({
   }
 }
 
+function toStandardBase64Secret(secret: string): string {
+  const knownPrefixes = ['whsec_', 'ws_']
+  const matchedPrefix = knownPrefixes.find((p) => secret.startsWith(p))
+  const body = matchedPrefix ? secret.slice(matchedPrefix.length) : secret
+
+  let normalized = body.replace(/-/g, '+').replace(/_/g, '/')
+  while (normalized.length % 4 !== 0) {
+    normalized += '='
+  }
+
+  return normalized
+}
+
 export async function verifyWebhook(rawBody: string, headers: Headers) {
+  const rawSecret = process.env.WHOP_WEBHOOK_SECRET!
   return whop.webhooks.unwrap(rawBody, {
     headers: Object.fromEntries(headers.entries()),
-    key: process.env.WHOP_WEBHOOK_SECRET!,
+    key: toStandardBase64Secret(rawSecret),
   })
 }
