@@ -15,19 +15,26 @@ export async function enforceRateLimit(options: {
   limit: number
   windowSeconds: number
 }): Promise<void> {
-  const { key, limit, windowSeconds } = options
-  const redisKey = `rate-limit:${key}`
+  try {
+    const { key, limit, windowSeconds } = options
+    const redisKey = `rate-limit:${key}`
 
-  const count = await redis.incr(redisKey)
+    const count = await redis.incr(redisKey)
 
-  if (count === 1) {
-    await redis.expire(redisKey, windowSeconds)
-  }
+    if (count === 1) {
+      await redis.expire(redisKey, windowSeconds)
+    }
 
-  if (count > limit) {
-    throw new RateLimitExceededError(
-      `Rate limit exceeded. Maximum ${limit} requests per ${windowSeconds} seconds.`
-    )
+    if (count > limit) {
+      throw new RateLimitExceededError(
+        `Rate limit exceeded. Maximum ${limit} requests per ${windowSeconds} seconds.`
+      )
+    }
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      throw error
+    }
+    console.warn('[rateLimit] Redis rate limit check failed, allowing request:', error)
   }
 }
 

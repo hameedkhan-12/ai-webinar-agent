@@ -16,6 +16,7 @@ const CountdownTimer = ({
   webinarId,
   webinarStatus,
 }: Props) => {
+  const [mounted, setMounted] = useState(false)
   const [isExpired, setIsExpired] = useState(false)
   const [timeLeft, setTimeLeft] = useState({
     days: 0,
@@ -39,6 +40,7 @@ const CountdownTimer = ({
   const [seconds1, seconds2] = splitDigits(timeLeft.seconds)
 
   useEffect(() => {
+    setMounted(true)
     const calculateTimeLeft = () => {
       const now = new Date()
       const difference = targetDate.getTime() - now.getTime()
@@ -90,6 +92,22 @@ const CountdownTimer = ({
 
     return () => clearInterval(timer)
   }, [targetDate, isExpired, webinarId, webinarStatus])
+
+  if (!mounted) {
+    return (
+      <div className={cn('text-center min-h-[96px]', className)}>
+        <div className="flex items-center justify-center gap-4 mb-8 opacity-0">
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">Hours</p>
+            <div className="flex justify-center gap-1">
+              <div className="bg-secondary w-10 h-12 rounded text-xl" />
+              <div className="bg-secondary w-10 h-12 rounded text-xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className={cn('text-center', className)}>
