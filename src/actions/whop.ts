@@ -109,13 +109,24 @@ export const handleMembershipStatusChange = async (
     const email = metadata.email
     const kind = metadata.kind ?? 'platform_subscription'
 
-    // Look up user by ID first, or by email as fallback
+    // Look up user by DB ID or Clerk ID first, or by email as fallback (case-insensitive)
     let user = null
     if (userId) {
-      user = await prisma.user.findUnique({ where: { id: userId } })
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [{ id: userId }, { clerkId: userId }],
+        },
+      })
     }
     if (!user && email) {
-      user = await prisma.user.findUnique({ where: { email } })
+      user = await prisma.user.findFirst({
+        where: {
+          email: {
+            equals: email,
+            mode: 'insensitive',
+          },
+        },
+      })
     }
 
     if (!user) {

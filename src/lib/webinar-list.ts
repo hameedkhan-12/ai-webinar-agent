@@ -6,6 +6,7 @@ export type WebinarListItem = {
   title: string
   description: string | null
   startTime: string
+  createdAt: string
   webinarStatus: WebinarStatusEnum
   tags: string[]
   ctaType: CtaTypeEnum
@@ -17,6 +18,7 @@ export function toWebinarListItem(webinar: {
   title: string
   description: string | null
   startTime: Date
+  createdAt: Date
   webinarStatus: WebinarStatusEnum
   tags: string[]
   ctaType: CtaTypeEnum
@@ -27,6 +29,7 @@ export function toWebinarListItem(webinar: {
     title: webinar.title,
     description: webinar.description,
     startTime: webinar.startTime.toISOString(),
+    createdAt: webinar.createdAt.toISOString(),
     webinarStatus: webinar.webinarStatus,
     tags: webinar.tags,
     ctaType: webinar.ctaType,

@@ -79,7 +79,7 @@ export function WebinarsClient({ webinars, initialFilter }: Props) {
           webinar.tags.some((tag) => tag.toLowerCase().includes(q))
         )
       })
-      .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }, [webinars, filter, search])
 
   const filters: Filter[] = ['all', 'upcoming', 'live', 'ended']

@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import {
+  activateSubscription,
+  activateCustomVoiceAddon,
+} from '@/actions/subscription'
 
 const REDIRECT_DELAY_MS = 2500
 
@@ -26,15 +30,28 @@ export default function CheckoutCompletePage() {
   useEffect(() => {
     if (!success) return
 
+    // Immediately activate the subscription / addon in DB for the logged-in user
+    const syncStatus = async () => {
+      try {
+        if (next?.includes('voice')) {
+          await activateCustomVoiceAddon()
+        } else {
+          await activateSubscription()
+        }
+      } catch (err) {
+        console.error('Error auto-activating subscription:', err)
+      }
+    }
+
+    syncStatus()
+
     // Count down display
     const interval = setInterval(() => {
       setCountdown((c) => Math.max(0, c - 1))
     }, 1000)
 
     // Flush the Next.js router cache so the layout re-fetches the user
-    // from DB (subscription=true) before we navigate. Without this the
-    // header still shows the old pre-payment snapshot and the
-    // "Create Webinar" button never appears.
+    // from DB (subscription=true) before we navigate.
     const timeout = setTimeout(() => {
       router.refresh()
       router.push(destination)
@@ -44,7 +61,7 @@ export default function CheckoutCompletePage() {
       clearInterval(interval)
       clearTimeout(timeout)
     }
-  }, [success, destination, router])
+  }, [success, destination, next, router])
 
   return (
     <div className="flex flex-1 items-center justify-center min-h-[60vh]">

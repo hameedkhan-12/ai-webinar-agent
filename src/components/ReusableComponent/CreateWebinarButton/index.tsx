@@ -55,10 +55,12 @@ const CreateWebinarButton = ({ assistants }: Props) => {
   ]
 
   const handleComplete = (webinarId: string) => {
+    const origin =
+      typeof window !== 'undefined'
+        ? window.location.origin
+        : process.env.NEXT_PUBLIC_BASE_URL || ''
+    setWebinarLink(`${origin}/live-webinar/${webinarId}`)
     setComplete(true)
-    setWebinarLink(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/live-webinar/${webinarId}`
-    )
   }
 
   const handleCreateNew = () => {

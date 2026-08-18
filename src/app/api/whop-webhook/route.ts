@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyWebhook } from '@/lib/whop'
+import { verifyWebhook, whop } from '@/lib/whop'
 import { handleMembershipStatusChange } from '@/actions/whop'
 
 const ACTIVATE_EVENTS = new Set([
@@ -9,24 +9,33 @@ const ACTIVATE_EVENTS = new Set([
   'payment.succeeded',
   'payment.created',
   'invoice.paid',
+  'checkout.completed',
+  'checkout.session.completed',
 ])
 
 const DEACTIVATE_EVENTS = new Set([
   'membership.deactivated',
   'membership.went_invalid',
+  'membership.canceled',
+  'membership.expired',
+  'membership.deleted',
 ])
 
-function extractMetadata(eventData: unknown): Record<string, string> {
-  if (!eventData || typeof eventData !== 'object') return {}
+async function extractMetadata(event: unknown): Promise<Record<string, string>> {
+  if (!event || typeof event !== 'object') return {}
 
-  const data = eventData as Record<string, unknown>
+  const raw = event as Record<string, unknown>
+  const data = (raw.data && typeof raw.data === 'object' ? raw.data : raw) as Record<string, unknown>
+
   const sources = [
+    raw.metadata,
     data.metadata,
     (data.membership as Record<string, unknown> | undefined)?.metadata,
     (data.plan as Record<string, unknown> | undefined)?.metadata,
     (data.payment as Record<string, unknown> | undefined)?.metadata,
     (data.checkout_configuration as Record<string, unknown> | undefined)?.metadata,
     data.custom_metadata,
+    raw.custom_metadata,
   ]
 
   let merged: Record<string, string> = {}
@@ -40,10 +49,33 @@ function extractMetadata(eventData: unknown): Record<string, string> {
     }
   }
 
+  // Fallback: If userId or email is missing, but checkout_configuration_id is present, retrieve it from Whop API
+  const checkoutConfigId =
+    (data.checkout_configuration_id as string) ||
+    (raw.checkout_configuration_id as string) ||
+    ((data.membership as Record<string, unknown> | undefined)?.checkout_configuration_id as string)
+
+  if ((!merged.userId || !merged.email) && checkoutConfigId) {
+    try {
+      const config = await whop.checkoutConfigurations.retrieve(checkoutConfigId)
+      if (config && config.metadata) {
+        for (const [k, v] of Object.entries(config.metadata)) {
+          if (v !== undefined && v !== null && !merged[k]) {
+            merged[k] = String(v)
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[Whop Webhook] Failed to fetch checkout configuration metadata:', err)
+    }
+  }
+
   if (!merged.email) {
     const possibleEmail =
       data.email ??
+      raw.email ??
       (data.user as Record<string, unknown> | undefined)?.email ??
+      (raw.user as Record<string, unknown> | undefined)?.email ??
       (data.member as Record<string, unknown> | undefined)?.email ??
       ((data.membership as Record<string, unknown> | undefined)?.user as Record<string, unknown> | undefined)?.email
     if (possibleEmail && typeof possibleEmail === 'string') {
@@ -71,7 +103,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true }, { status: 200 })
     }
 
-    const metadata = extractMetadata(event.data)
+    const metadata = await extractMetadata(event)
     await handleMembershipStatusChange(metadata, isActivateEvent)
 
     return NextResponse.json({ received: true }, { status: 200 })

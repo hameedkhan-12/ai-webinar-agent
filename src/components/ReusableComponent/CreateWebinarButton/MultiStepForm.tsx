@@ -63,14 +63,14 @@ const MultiStepForm = ({ steps, onComplete }: Props) => {
         const result = await createWebinar(formData)
         if (result.status === 200 && result.webinarId) {
           toast.success('Your webinar has been created successfully.')
+          router.refresh()
           onComplete(result.webinarId)
         } else {
           toast.error(
             result.message || 'Your webinar has not been created successfully'
           )
-          setValidationError(result.message)
+          setValidationError(result.message || 'Failed to create webinar')
         }
-        router.refresh()
       } catch (error) {
         console.error('Error creating webinar:', error)
         toast.error('Failed to create webinar. Please try again.')

@@ -135,7 +135,7 @@ export const getWebinarByPresenterId = async (
           },
         },
       },
-      orderBy: { startTime: 'desc' },
+      orderBy: { createdAt: 'desc' },
     })
     return webinars
   } catch (error) {

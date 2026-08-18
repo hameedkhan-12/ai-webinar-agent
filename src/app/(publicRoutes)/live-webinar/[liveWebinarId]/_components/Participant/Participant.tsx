@@ -38,9 +38,8 @@ const Participant = ({ apiKey, callId, webinar }: Props) => {
         const user: User = {
           id: attendee?.id || 'guest',
           name: attendee?.name || 'Guest',
-          image: `https://api.dicebear.com/7.x/initials/svg?seed=${
-            attendee?.name || 'Guest'
-          }`,
+          image: `https://api.dicebear.com/7.x/initials/svg?seed=${attendee?.name || 'Guest'
+            }`,
         }
 
         const userToken = await getStreamIoToken(attendee)
@@ -81,23 +80,9 @@ const Participant = ({ apiKey, callId, webinar }: Props) => {
     initClient()
 
     return () => {
-      const currentCall = call
-      const currentClient = client
-
-      if (currentCall && currentClient) {
-        currentCall
-          .leave()
-          .then(() => {
-            console.log('Left the call')
-            currentClient.disconnectUser()
-            clientInitialized.current = false
-          })
-          .catch((error) => {
-            console.error('Error leaving call:', error)
-          })
-      }
+      clientInitialized.current = false
     }
-  }, [apiKey, attendee, call, callId, client, webinar.id])
+  }, [apiKey, attendee?.id, callId, webinar.id])
 
   if (!attendee) {
     return (

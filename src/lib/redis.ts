@@ -26,20 +26,32 @@ function createRedisClient(options: { maxRetriesPerRequest: number | null }): Re
     throw new Error('REDIS_URL is invalid or not configured')
   }
 
-  return new Redis(redisUrl, {
+  const client = new Redis(redisUrl, {
     maxRetriesPerRequest: options.maxRetriesPerRequest,
     enableReadyCheck: false,
     lazyConnect: true,
-    enableOfflineQueue: true,
+    enableOfflineQueue: false, // Crucial: fail fast instead of hanging when disconnected
+    commandTimeout: 2000,      // Fail commands after 2 seconds if Redis doesn't respond
     retryStrategy(times) {
+      // If maxRetriesPerRequest is not null, we stop retrying after a few attempts
+      if (options.maxRetriesPerRequest !== null && times >= 3) {
+        return null;
+      }
       return Math.min(times * 100, 3000)
     },
   })
+
+  client.on('error', (err) => {
+    console.warn('[Redis Error]', err.message)
+  })
+
+  return client
 }
 
 function getRedisClient(): Redis {
   if (!globalForRedis.redis) {
-    globalForRedis.redis = createRedisClient({ maxRetriesPerRequest: null })
+    // Default client gets fail-fast settings
+    globalForRedis.redis = createRedisClient({ maxRetriesPerRequest: 3 })
   }
 
   return globalForRedis.redis
