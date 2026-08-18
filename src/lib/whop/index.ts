@@ -93,6 +93,11 @@ function toStandardBase64Secret(secret: string): string {
   const matchedPrefix = knownPrefixes.find((p) => secret.startsWith(p))
   const body = matchedPrefix ? secret.slice(matchedPrefix.length) : secret
 
+  const isHex = /^[0-9a-fA-F]+$/.test(body) && body.length % 2 === 0
+  if (isHex) {
+    return Buffer.from(body, 'hex').toString('base64')
+  }
+
   let normalized = body.replace(/-/g, '+').replace(/_/g, '/')
   while (normalized.length % 4 !== 0) {
     normalized += '='
