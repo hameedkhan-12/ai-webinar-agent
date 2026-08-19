@@ -15,11 +15,21 @@ export async function onAuthenticateUser() {
     })
 
     if (userExists) {
-      const updatedUser = await prisma.user.update({
-        where: { clerkId: user.id },
-        data: { lastLoginAt: new Date() },
-      })
-      return { status: 200, user: updatedUser }
+      // Throttle lastLoginAt updates to once every 15 minutes to avoid blocking page navigation
+      const shouldUpdateLastLogin =
+        !userExists.lastLoginAt ||
+        Date.now() - new Date(userExists.lastLoginAt).getTime() > 15 * 60 * 1000
+
+      if (shouldUpdateLastLogin) {
+        prisma.user
+          .update({
+            where: { clerkId: user.id },
+            data: { lastLoginAt: new Date() },
+          })
+          .catch((err) => console.warn('Non-blocking lastLoginAt update failed:', err))
+      }
+
+      return { status: 200, user: userExists }
     }
 
     const primaryEmail =

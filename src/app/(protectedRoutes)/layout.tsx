@@ -10,12 +10,14 @@ type Props = {
 }
 
 const Layout = async ({ children }: Props) => {
-  const userExist = await onAuthenticateUser()
+  const [userExist, assistants] = await Promise.all([
+    onAuthenticateUser(),
+    getAllAssistants(),
+  ])
+
   if (!userExist.user) {
     redirect('/sign-in')
   }
-
-  const assistants = await getAllAssistants()
 
 
   return (

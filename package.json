@@ -50,6 +50,7 @@
     "@stream-io/node-sdk": "^0.4.23",
     "@stream-io/video-react-sdk": "^1.14.6",
     "@teispace/next-themes": "^2.0.4",
+    "@upstash/redis": "^1.38.2",
     "@vapi-ai/server-sdk": "^0.6.4",
     "@vapi-ai/web": "^2.2.7",
     "@whop/sdk": "^0.0.42",

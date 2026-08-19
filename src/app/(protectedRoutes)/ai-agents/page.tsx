@@ -7,8 +7,10 @@ import ModelSection from './_components/ModelSection'
 
 
 const page = async () => {
-  const allAgents = await getAllAssistants()
-  const currentUser = await onAuthenticateUser()
+  const [allAgents, currentUser] = await Promise.all([
+    getAllAssistants(),
+    onAuthenticateUser(),
+  ])
 
   if (!currentUser.user) {
     redirect('/')

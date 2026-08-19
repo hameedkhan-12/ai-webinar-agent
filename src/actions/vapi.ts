@@ -1,5 +1,6 @@
 'use server'
 
+import { unstable_cache, revalidatePath } from 'next/cache'
 import { aiAgentPrompt } from '@/lib/data'
 import { getVapiServer } from '@/lib/vapi/vapiServer'
 import { prisma } from '@/lib/prismaClient'
@@ -66,14 +67,26 @@ const assertCanUseCustomVoice = async (voiceId: string) => {
   return { userId: currentUser.user.id, voiceId }
 }
 
-export const getAllAssistants = async () => {
-  try {
+const getCachedAssistants = unstable_cache(
+  async () => {
     const vapiServer = getVapiServer()
     const getAllAgents = await vapiServer.assistants.list()
+    return getAllAgents.map(toAssistantSummary)
+  },
+  ['vapi-all-assistants-list'],
+  {
+    revalidate: 60,
+    tags: ['vapi-assistants'],
+  }
+)
+
+export const getAllAssistants = async () => {
+  try {
+    const data = await getCachedAssistants()
     return {
       success: true,
       status: 200,
-      data: getAllAgents.map(toAssistantSummary),
+      data,
     }
   } catch (error) {
     console.error('Error fetching agents:', error)
@@ -130,6 +143,8 @@ export const createAssistant = async (name: string, customVoiceId?: string) => {
         },
       })
     }
+
+    revalidatePath('/ai-agents')
 
     return {
       success: true,
@@ -193,6 +208,8 @@ export const updateAssistant = async (
       ...(voiceUpdate ? { voice: voiceUpdate } : {}),
       serverMessages: [],
     })
+
+    revalidatePath('/ai-agents')
 
     return {
       success: true,

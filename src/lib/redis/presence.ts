@@ -47,21 +47,29 @@ async function countActiveMembers(setKey: string): Promise<number> {
       return 0
     }
 
+    // Batch all EXISTS checks in a single pipeline round-trip instead of N serial calls
+    const pipeline = redis.pipeline()
+    for (const attendanceId of members) {
+      pipeline.exists(activeCallKey(attendanceId))
+    }
+    const results = await pipeline.exec()
+
     let activeCount = 0
     const staleMembers: string[] = []
 
-    for (const attendanceId of members) {
-      const exists = await redis.exists(activeCallKey(attendanceId))
-
-      if (exists) {
-        activeCount++
-      } else {
-        staleMembers.push(attendanceId)
-      }
+    if (results) {
+      results.forEach(([err, exists], i) => {
+        if (!err && exists) {
+          activeCount++
+        } else {
+          staleMembers.push(members[i])
+        }
+      })
     }
 
     if (staleMembers.length > 0) {
-      await redis.srem(setKey, ...staleMembers)
+      // Fire-and-forget cleanup
+      redis.srem(setKey, ...staleMembers).catch(() => {})
     }
 
     return activeCount
