@@ -52,6 +52,24 @@ export async function classifyTranscript(transcriptId: string) {
       }
     }
 
+    // Idempotency guard
+    const alreadyClassified = await prisma.objectionInstance.findFirst({
+      where: { callTranscriptId: transcriptId },
+      select: { id: true },
+    })
+
+    if (alreadyClassified) {
+      console.log(
+        `[classifyTranscript] Transcript ${transcriptId} already has objection instances - skipping re-classification (idempotent retry)`
+      )
+      return {
+        success: true,
+        status: 200,
+        message: 'Already classified - skipped duplicate run',
+        classifiedCount: 0,
+      }
+    }
+
     const { attendance } = callTranscript
     const { webinarId } = attendance
     const isConverted = attendance.attendedType === AttendedTypeEnum.CONVERTED
@@ -108,6 +126,7 @@ export async function classifyTranscript(transcriptId: string) {
         data: {
           objectionId: objection.id,
           attendanceId: attendance.id,
+          callTranscriptId: transcriptId,
           transcriptExcerpt: item.transcriptExcerpt || '',
           aiResponse: item.aiResponse || '',
           converted: isConverted,
@@ -159,8 +178,8 @@ async function analyzeObjectionsWithAI(
   const existingListStr =
     existingObjections.length > 0
       ? existingObjections
-          .map((o) => `- "${o.label}": ${o.description}`)
-          .join('\n')
+        .map((o) => `- "${o.label}": ${o.description}`)
+        .join('\n')
       : 'None yet recorded.'
 
   const prompt = `You are a sales intelligence analyst. Analyze the following transcript of a voice sales call between a prospect and an AI sales assistant.
@@ -209,6 +228,7 @@ ${transcriptText}
         body: JSON.stringify({
           model: 'claude-3-5-sonnet-20241022',
           max_tokens: 1000,
+          temperature: 0,
           messages: [{ role: 'user', content: prompt }],
         }),
       })
@@ -229,6 +249,7 @@ ${transcriptText}
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [{ role: 'user', content: prompt }],
+          temperature: 0,
           response_format: { type: 'json_object' },
         }),
       })

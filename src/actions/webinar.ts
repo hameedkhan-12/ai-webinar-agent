@@ -25,9 +25,6 @@ function combineDateTime(
     hours = 0
   }
 
-  // date.getTime() represents client local midnight (or start of day).
-  // Adding (hours * 3600 + minutes * 60) * 1000 computes the exact timestamp
-  // for the user's selected time on their chosen date.
   const timeOffsetMs = (hours * 3600 + minutes * 60) * 1000
   return new Date(date.getTime() + timeOffsetMs)
 }

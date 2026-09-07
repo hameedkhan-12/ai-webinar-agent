@@ -5,11 +5,6 @@ type DecodedWav = {
   samples: Float32Array
 }
 
-/**
- * Minimal WAV (RIFF/PCM) decoder. Supports 16-bit integer PCM and 32-bit
- * float PCM, the two formats torchaudio.save typically produces. Mixes
- * down to mono by averaging channels.
- */
 function decodeWav(buffer: Buffer): DecodedWav {
   if (buffer.toString('ascii', 0, 4) !== 'RIFF' ||
       buffer.toString('ascii', 8, 12) !== 'WAVE') {

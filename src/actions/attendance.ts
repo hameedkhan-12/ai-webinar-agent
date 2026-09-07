@@ -15,6 +15,7 @@ import {
 import { AttendanceData } from '@/lib/type'
 import { revalidatePath } from 'next/cache'
 
+
 export const getWebinarAttendance = async (
   webinarId: string,
   options: {
@@ -103,7 +104,7 @@ export const getWebinarAttendance = async (
 
         const queryType =
           webinar.ctaType === CtaTypeEnum.BOOK_A_CALL &&
-          type === AttendedTypeEnum.BREAKOUT_ROOM
+            type === AttendedTypeEnum.BREAKOUT_ROOM
             ? AttendedTypeEnum.ADDED_TO_CART
             : type
 
@@ -560,9 +561,16 @@ export const getDashboardMetrics = async (userId: string) => {
       }
     }
 
+    // Latency instrumentation: logs one line per request tagged
+    const start = performance.now()
+
     const cached = await getCachedDashboardMetrics<DashboardMetricsData>(userId)
 
     if (cached) {
+      const durationMs = performance.now() - start
+      console.log(
+        `[metrics-latency] cache_hit ${durationMs.toFixed(2)}ms userId=${userId}`
+      )
       return {
         success: true,
         status: 200,
@@ -572,6 +580,11 @@ export const getDashboardMetrics = async (userId: string) => {
 
     const data = await computeDashboardMetrics(userId)
     await setCachedDashboardMetrics(userId, data)
+
+    const durationMs = performance.now() - start
+    console.log(
+      `[metrics-latency] cache_miss ${durationMs.toFixed(2)}ms userId=${userId}`
+    )
 
     return {
       success: true,

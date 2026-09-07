@@ -224,14 +224,15 @@ model Attendance {
 }
 
 model CallTranscript {
-  id               String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  attendanceId     String                             @db.Uuid
-  attendance       Attendance                         @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
-  vapiCallId       String                             @unique
-  transcript       String                             @db.Text
-  durationSeconds  Int?
-  processingStatus CallTranscriptProcessingStatusEnum @default(TRANSCRIPT_SAVED)
-  createdAt        DateTime                           @default(now())
+  id                String                             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  attendanceId      String                             @db.Uuid
+  attendance        Attendance                         @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  vapiCallId        String                             @unique
+  transcript        String                             @db.Text
+  durationSeconds   Int?
+  processingStatus  CallTranscriptProcessingStatusEnum @default(TRANSCRIPT_SAVED)
+  createdAt         DateTime                           @default(now())
+  objectionInstances ObjectionInstance[]
 
   @@index([attendanceId])
 }
@@ -250,18 +251,21 @@ model Objection {
 }
 
 model ObjectionInstance {
-  id                String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  objectionId       String     @db.Uuid
-  objection         Objection  @relation(fields: [objectionId], references: [id], onDelete: Cascade)
-  attendanceId      String     @db.Uuid
-  attendance        Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
-  transcriptExcerpt String     @db.Text
-  aiResponse        String     @db.Text
-  converted         Boolean    @default(false)
-  createdAt         DateTime   @default(now())
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  objectionId       String        @db.Uuid
+  objection         Objection     @relation(fields: [objectionId], references: [id], onDelete: Cascade)
+  attendanceId      String        @db.Uuid
+  attendance        Attendance    @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  callTranscriptId String?       @db.Uuid
+  callTranscript    CallTranscript? @relation(fields: [callTranscriptId], references: [id], onDelete: SetNull)
+  transcriptExcerpt String        @db.Text
+  aiResponse        String        @db.Text
+  converted         Boolean       @default(false)
+  createdAt         DateTime      @default(now())
 
   @@index([objectionId])
   @@index([attendanceId])
+  @@index([callTranscriptId])
 }
 
 enum EngagementEventType {

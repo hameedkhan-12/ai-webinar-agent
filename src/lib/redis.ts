@@ -1,20 +1,5 @@
-/**
- * Redis adapter that auto-selects the right client based on environment:
- *
- *   - If UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN are set (Vercel / Upstash)
- *     → uses @upstash/redis (HTTP/REST, serverless-friendly, no TCP overhead)
- *
- *   - Otherwise (local Docker dev) → falls back to ioredis over TCP
- *
- * The exported `redis` object exposes the same method surface used throughout
- * the app (get, set, del, incr, expire, exists, smembers, sadd, srem, pipeline, multi).
- */
 
 import type { Redis as IORedis } from 'ioredis'
-
-// ──────────────────────────────────────────────────────
-// Types
-// ──────────────────────────────────────────────────────
 
 export interface RedisAdapter {
   get(key: string): Promise<string | null>

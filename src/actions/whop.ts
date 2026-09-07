@@ -170,15 +170,6 @@ export const handleMembershipStatusChange = async (
   }
 }
 
-/**
- * Saves the host's own Whop company ID, connecting their business as the
- * payout destination for their BUY_NOW sales. Unlike Stripe Connect's
- * OAuth redirect flow, Whop's "payments for platforms" model expects the
- * host to copy their company_id directly from their own Whop dashboard -
- * there's no confirmed OAuth-style connect flow for this at build time,
- * so this is the safe, docs-supported approach. If Whop does add a nicer
- * OAuth connect flow later, this is the one place to swap it in.
- */
 export const saveWhopCompanyId = async (userId: string, companyId: string) => {
   const trimmed = companyId.trim()
   if (!trimmed) {
