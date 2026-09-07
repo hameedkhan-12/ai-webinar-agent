@@ -1,7 +1,29 @@
-Dockerfile
-.dockerignore
-node_modules
-npm-debug.log
-README.md
-.next
+# Git & source control
 .git
+.gitignore
+
+# Dockerfiles & ignore files
+Dockerfile*
+.dockerignore
+
+# Dependencies & package caches
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Next.js build artifacts & caches
+.next
+out
+.turbo
+*.tsbuildinfo
+
+# Local environment variables
+.env*
+
+# Documentation & scratch files
+README.md
+scripts/compute-percentile.ts
+__pycache__
+*.pyc
