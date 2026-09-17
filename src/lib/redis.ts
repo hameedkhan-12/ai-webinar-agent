@@ -117,8 +117,11 @@ function createIoRedisAdapter(): RedisAdapter {
   const Redis = require('ioredis') as typeof import('ioredis')
 
   if (!globalForIoRedis.ioRedisClient) {
-    const url = process.env.REDIS_URL?.trim()
+    let url = process.env.REDIS_URL?.trim()
     if (!url) throw new Error('REDIS_URL not configured')
+    if (url.includes('upstash.io') && url.startsWith('redis://')) {
+      url = url.replace(/^redis:\/\//, 'rediss://')
+    }
 
     const client = new (Redis as unknown as new (url: string, options: object) => IORedis)(url, {
       maxRetriesPerRequest: 3,
@@ -241,8 +244,11 @@ export async function checkRedisConnection(): Promise<void> {
 export function createBullMQConnection(): IORedis {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   const Redis = require('ioredis') as typeof import('ioredis')
-  const url = process.env.REDIS_URL?.trim()
+  let url = process.env.REDIS_URL?.trim()
   if (!url) throw new Error('REDIS_URL is required for BullMQ (not available on Upstash HTTP)')
+  if (url.includes('upstash.io') && url.startsWith('redis://')) {
+    url = url.replace(/^redis:\/\//, 'rediss://')
+  }
   return new (Redis as unknown as new (url: string, options: object) => IORedis)(url, {
     maxRetriesPerRequest: null,
     enableReadyCheck: false,

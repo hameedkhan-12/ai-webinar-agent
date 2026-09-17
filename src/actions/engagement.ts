@@ -12,8 +12,6 @@ type ActionResult<T = undefined> =
   | { success: false; status: 400 | 404 | 429 | 500; message: string }
 
 // --- Guardrails -------------------------------------------------------
-// These endpoints are reachable from public, unauthenticated attendee
-// pages, so inputs are validated/clamped defensively rather than trusted.
 const MAX_CHAT_TEXT_LENGTH = 500
 const MAX_WATCH_SECONDS = 6 * 60 * 60 // 6 hours - generous ceiling, blocks garbage input
 
