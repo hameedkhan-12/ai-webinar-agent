@@ -100,11 +100,36 @@ jobs:
           echo "Resolved sha_short: $SHA_SHORT"
           echo "Image to deploy: $IMAGE"
 
+          COMMANDS=$(cat <<JSON
+          {
+            "commands": [
+              "echo === docker login ===",
+              "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $REGISTRY",
+              "echo === docker pull ===",
+              "docker pull $IMAGE",
+              "echo === stopping old container (ok if none exists) ===",
+              "docker stop -t 30 voxinar-worker 2>&1 || echo no existing container to stop",
+              "docker rm voxinar-worker 2>&1 || echo no existing container to remove",
+              "echo === starting new container ===",
+              "docker run -d --restart unless-stopped --env-file /home/ubuntu/worker.env --name voxinar-worker $IMAGE",
+              "echo === waiting 15s ===",
+              "sleep 15",
+              "echo === container status ===",
+              "docker ps -a --filter name=voxinar-worker",
+              "echo === recent container logs ===",
+              "docker logs --tail 50 voxinar-worker 2>&1 || echo no logs available",
+              "echo === final running check ===",
+              "docker ps --filter name=voxinar-worker --filter status=running --format '{{.Names}}' | grep -q voxinar-worker"
+            ]
+          }
+          JSON
+          )
+
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "${{ vars.EC2_INSTANCE_ID }}" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploy voxinar-worker $SHA_SHORT" \
-            --parameters "{\"commands\":[\"set -e\",\"aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $REGISTRY\",\"docker pull $IMAGE\",\"docker stop -t 30 voxinar-worker || true\",\"docker rm voxinar-worker || true\",\"docker run -d --restart unless-stopped --env-file /home/ubuntu/worker.env --name voxinar-worker $IMAGE\",\"sleep 15\",\"docker ps --filter name=voxinar-worker --filter status=running --format '{{.Names}}' | grep -q voxinar-worker\"]}" \
+            --parameters "$COMMANDS" \
             --query "Command.CommandId" \
             --output text)
 
