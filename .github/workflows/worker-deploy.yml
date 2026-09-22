@@ -107,7 +107,7 @@ jobs:
               "aws ecr get-login-password --region ${{ env.AWS_REGION }} | docker login --username AWS --password-stdin $REGISTRY",
               "echo === docker pull ===",
               "docker pull $IMAGE",
-              "echo === stopping old container (ok if none exists) ===",
+              "echo === stopping old container if any ===",
               "docker stop -t 30 voxinar-worker 2>&1 || echo no existing container to stop",
               "docker rm voxinar-worker 2>&1 || echo no existing container to remove",
               "echo === starting new container ===",
