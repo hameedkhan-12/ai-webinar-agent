@@ -90,9 +90,15 @@ jobs:
       - name: Send deploy command via SSM
         id: send-command
         run: |
-          REGISTRY="${{ needs.build-and-push.outputs.registry }}"
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          REGISTRY="$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com"
           SHA_SHORT="${{ needs.build-and-push.outputs.sha_short }}"
           IMAGE="$REGISTRY/${{ env.ECR_REPOSITORY }}:$SHA_SHORT"
+
+          echo "Resolved account: $ACCOUNT_ID"
+          echo "Resolved registry: $REGISTRY"
+          echo "Resolved sha_short: $SHA_SHORT"
+          echo "Image to deploy: $IMAGE"
 
           COMMAND_ID=$(aws ssm send-command \
             --instance-ids "${{ vars.EC2_INSTANCE_ID }}" \
